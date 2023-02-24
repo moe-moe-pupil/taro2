@@ -323,7 +323,7 @@ var AIComponent = TaroEntity.extend({
 						self.goIdle();
 					} else {
 						// stop moving, start attacking if my attack can reach the target
-						if (self.maxAttackRange > this.getDistanceToTarget()) {
+						if (self.maxAttackRange > this.getDistanceToTarget() && unit._stats.settings && !unit._stats.settings.isStunned) {
 							unit.isMoving = false;
 							unit.ability.startUsingItem();
 						} else if (!unit.isMoving) {

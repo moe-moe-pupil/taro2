@@ -1,0 +1,187 @@
+var BuffComponent = TaroEntity.extend({
+	classId: 'BuffComponent',
+	componentId: 'buff',
+
+	init: function (entity, options) {
+		var self = this;
+		self._entity = entity;
+	},
+
+	applyBuff: function (buff, duration) {
+		var self = this;
+		var unit = self._entity;
+		if (!taro.isServer) return;
+		var baseEntityStats = taro.game.getAsset('unitTypes', unit._stats['type']);
+		if (!baseEntityStats || !buff) {
+			return;
+		};
+		
+		var isDuplicated = false;
+		for (let i = 0; i < unit._stats.buffs.length; i++){ //search for duplicate buffs
+			if (unit._stats.buffs[i].name == buff.name){
+				if (unit._stats.buffs[i].maxStacks > unit._stats.buffs[i].stacks) { //check if the buff can receive another stack
+					unit._stats.buffs[i].stacks++;
+					unit._stats.buffs[i].timeLimit = Date.now() + duration; //reset timer
+					isDuplicated = true;
+					unit.streamUpdateData([{ buff: {data: unit._stats.buffs[i], action: 'update', index: i}}]);
+				} else if (unit._stats.buffs[i].unique) {
+					unit._stats.buffs[i].timeLimit = Date.now() + duration
+					unit.streamUpdateData([{ buff: {data: unit._stats.buffs[i], action: 'update', index: i}}]);
+					return;
+				};
+			};
+		};
+		
+		if (!isDuplicated) {
+			var newBuff = {
+				name: buff.name,
+				id: '_' + Math.random().toString(36).substring(2, 9),
+				timeLimit: Date.now() + duration,
+				duration: duration,
+				description: buff.description,
+				image: buff.image,
+				effects: buff.effects,
+				stacks: 1,
+				maxStacks: buff.maxStacks,
+				unique: buff.unique
+			};
+			unit._stats.buffs.push(newBuff);
+			unit.streamUpdateData([{ buff: {data: newBuff, action: 'create'}}]);
+			if (buff.effects.stuns) {
+				unit.streamUpdateData([{ stun: true }]);
+			};
+		};
+		
+		if (buff.effects.attributes) {
+			_.forEach(buff.effects.attributes, function (value, attrKey) {
+				var selectedAttribute = unit._stats.attributes[attrKey];
+				if (selectedAttribute) {
+					var currentAttributeValue = parseFloat(selectedAttribute.value) || 1;
+					var maxValue = parseFloat(selectedAttribute.max);
+
+					if (currentAttributeValue) {
+						var newMax = maxValue + parseFloat(value);
+						var newValue = Math.min(newMax, Math.max(selectedAttribute.min, currentAttributeValue)) + value;
+						unit.attribute.setMax(attrKey, newMax);
+						unit.attribute.update(attrKey, newValue, true);
+					};
+				};
+			});
+		};
+
+	},
+
+	removeBuff: function (buff) {
+		var self = this;
+		var unit = self._entity;
+
+		if (!taro.isServer) return;
+		var baseEntityStats = taro.game.getAsset('unitTypes', unit._stats['type']);
+		if (!baseEntityStats || !buff) {
+			return;
+		};
+		if (buff.effects.attributes) {
+			_.forEach(buff.effects.attributes, function (value, attrKey) {
+				var selectedAttribute = unit._stats.attributes[attrKey];
+				if (selectedAttribute) {
+					var currentAttributeValue = parseFloat(selectedAttribute.value) || 1;
+					var maxValue = parseFloat(selectedAttribute.max);
+
+					if (currentAttributeValue) {
+						var newMax = maxValue - parseFloat(value * buff.stacks);
+						var newValue = Math.min(newMax, Math.max(selectedAttribute.min, currentAttributeValue));
+						unit.attribute.setMax(attrKey, newMax);
+						unit.attribute.update(attrKey, newValue, true);
+					}
+				}
+			});
+		}
+		var index = unit._stats.buffs.map(e => e.id).indexOf(buff.id);
+		unit.streamUpdateData([{ buff: {data: buff.id, action: 'remove', index: index}}]);
+		if (buff.effects.stuns) {
+			if (unit._stats.buffs.every(item => item == buff || !item.effects.stuns)) {
+				unit.streamUpdateData([{ stun: false }]);
+			}
+		}
+		unit._stats.buffs.splice(index, 1);
+	},
+
+    createBuffIcon (buff) {
+		var self = this;
+		var entity = self._entity;
+		var ownerPlayer = entity.getOwner();
+		if (ownerPlayer && entity._stats.clientId === taro.network.id() && ownerPlayer._stats.selectedUnitId == entity.id()) {
+			$('#buff-icons').append($('<div/>', {
+					id: `${buff.id}`,
+					name: buff.name,
+					class: `buff-icon`,
+					style: `background-image: url(${  buff.image  });`,
+					html: `<small class='stack'>${buff.stacks > 1 ? String(buff.stacks) : ''}</small>`,
+					title: buff.name,
+					'data-container': 'body',
+					'data-toggle': 'popover',
+					'data-placement': 'top',
+					'data-content': buff.description
+				})
+			)				
+
+			$('#' + buff.id).append($('<div/>', {
+					id: `cd${buff.id}`,
+					class: `buff-cooldown`,
+					style: `animation: ${(buff.timeLimit - Date.now()) / 1000}s linear cd-animation forwards;`
+				})
+			).on("animationend", function() {
+				self.removeBuffIcon(buff.id)
+			}).popover({
+				html: true,
+				animation: false,
+				trigger: 'manual'
+			}).on('mouseenter', function () {
+				$(this).popover('show');
+				console.log('buff')
+			});
+		}		
+	},
+
+	removeBuffIcon (buffId) {
+		var self = this;
+		var entity = self._entity;
+		var ownerPlayer = entity.getOwner();
+		if (ownerPlayer && entity._stats.clientId === taro.network.id() && ownerPlayer._stats.selectedUnitId == entity.id()) {
+			$(`#${buffId}`).remove();
+		}
+	},
+
+	updateBuffIcon (buff) {
+		var entity = this._entity;
+		var ownerPlayer = entity.getOwner();
+		if (ownerPlayer && entity._stats.clientId === taro.network.id() && ownerPlayer._stats.selectedUnitId == entity.id()) {
+			var element = $(`#${buff.id}`);
+			if (buff.stacks > 1) {
+				element.find('small').text(buff.stacks);
+				element.find('div').remove();
+			};
+			element.append($('<div/>', {
+				id: `cd${buff.id}`,
+				class: `buff-cooldown`,
+				style: `animation: ${buff.duration / 1000}s linear cd-animation forwards;`
+				})
+			);
+		}	
+	},
+
+	updateBuffList () {
+		var self = this;
+		var entity = self._entity;
+		var ownerPlayer = entity.getOwner();
+		if (ownerPlayer && entity._stats.clientId === taro.network.id() && ownerPlayer._stats.selectedUnitId == entity.id()) {
+			$('#buff-icons').empty();
+			entity._stats.buffs.forEach(function(buff){
+				self.createBuffIcon(buff);
+			})
+		};
+	}
+
+});
+
+if (typeof (module) !== 'undefined' && typeof (module.exports) !== 'undefined') { module.exports = BuffComponent; }

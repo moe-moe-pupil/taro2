@@ -38,6 +38,7 @@ var defaultConfig = [
 	{ name: 'AbilityComponent', path: '../src/gameClasses/components/unit/AbilityComponent' },
 	{ name: 'AttributeComponent', path: '../src/gameClasses/components/unit/AttributeComponent' },
 	{ name: 'AIComponent', path: '../src/gameClasses/components/unit/AIComponent' },
+	{ name: 'BuffComponent', path: '../src/gameClasses/components/unit/BuffComponent' },
 
 	// Raycasting
 	{ name: 'Raycaster', path: '../src/gameClasses/Raycaster' },

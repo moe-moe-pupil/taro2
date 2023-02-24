@@ -107,6 +107,47 @@ body {
     width: 35px;
     height: 35px;
 }
+
+#buff-icons {
+    text-align: left;
+}
+
+.buff-icon {
+    display: inline-block;
+    background-size: cover;
+    width: 25px;
+    height: 25px;
+    margin: 0px 2px 0px 0px;
+    background-color: rgba(33, 42, 49, 0.5);
+    overflow: hidden;
+    position: relative;
+    border: solid 1px rgb(65, 67, 84);
+}
+
+.stack {
+    position: absolute;
+    right: 0%;
+    top: 45%;
+    font-size: .650em;
+    background-color: rgba(0, 0, 0, 0.225);
+}
+
+.buff-cooldown {
+    display: inline-block;
+    background-color: rgba(147, 147, 147, 0.515);
+    height: 100%;
+    width: 100%;
+}
+
+@keyframes cd-animation {
+    0% {
+      transform:translateX(-100%);
+    }
+    100% {
+      transform:translateX(0%);
+    }
+  }
+
 .popover {
     z-index: 10000;
 }

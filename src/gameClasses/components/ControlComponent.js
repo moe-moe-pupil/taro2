@@ -366,7 +366,7 @@ var ControlComponent = TaroEntity.extend({
 			}
 			
 			// unit rotation for human player. this runs on client-side only
-			if (!unit._stats.aiEnabled) {
+			if (!unit._stats.aiEnabled && unit._stats.settings && !unit._stats.settings.isStunned) {
 				unit.updateAngleToTarget();			
 			}
 		}	

@@ -202,9 +202,11 @@ var Player = TaroEntity.extend({
 				if (unit.unitUi) {
 					unit.unitUi.updateAllAttributeBars();
 				}
-
 				if (unit && unit.inventory) {
 					unit.inventory.updateBackpackButton();
+				}
+				if (unit.buff) {
+					unit.buff.updateBuffList();
 				}
 
 				unit.renderMobileControl();
