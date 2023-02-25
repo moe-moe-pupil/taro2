@@ -7,10 +7,9 @@ var BuffComponent = TaroEntity.extend({
 		self._entity = entity;
 	},
 
-	applyBuff: function (buff, duration) {
+	addBuff: function (buff, duration) {
 		var self = this;
 		var unit = self._entity;
-		if (!taro.isServer) return;
 		var baseEntityStats = taro.game.getAsset('unitTypes', unit._stats['type']);
 		if (!baseEntityStats || !buff) {
 			return;
@@ -23,10 +22,10 @@ var BuffComponent = TaroEntity.extend({
 					unit._stats.buffs[i].stacks++;
 					unit._stats.buffs[i].timeLimit = Date.now() + duration; //reset timer
 					isDuplicated = true;
-					unit.streamUpdateData([{ buff: {data: unit._stats.buffs[i], action: 'update', index: i}}]);
+					self.updateBuffIcon(unit._stats.buffs[i]);
 				} else if (unit._stats.buffs[i].unique) {
 					unit._stats.buffs[i].timeLimit = Date.now() + duration
-					unit.streamUpdateData([{ buff: {data: unit._stats.buffs[i], action: 'update', index: i}}]);
+					self.updateBuffIcon(unit._stats.buffs[i]);
 					return;
 				};
 			};
@@ -35,7 +34,7 @@ var BuffComponent = TaroEntity.extend({
 		if (!isDuplicated) {
 			var newBuff = {
 				name: buff.name,
-				id: '_' + Math.random().toString(36).substring(2, 9),
+				id: buff.id,
 				timeLimit: Date.now() + duration,
 				duration: duration,
 				description: buff.description,
@@ -46,13 +45,13 @@ var BuffComponent = TaroEntity.extend({
 				unique: buff.unique
 			};
 			unit._stats.buffs.push(newBuff);
-			unit.streamUpdateData([{ buff: {data: newBuff, action: 'create'}}]);
 			if (buff.effects.stuns) {
-				unit.streamUpdateData([{ stun: true }]);
+				unit._stats.isDisabled = true;
 			};
+			self.createBuffIcon(newBuff)
 		};
 		
-		if (buff.effects.attributes) {
+		if (!taro.isServer && buff.effects.attributes) {
 			_.forEach(buff.effects.attributes, function (value, attrKey) {
 				var selectedAttribute = unit._stats.attributes[attrKey];
 				if (selectedAttribute) {
@@ -74,13 +73,12 @@ var BuffComponent = TaroEntity.extend({
 	removeBuff: function (buff) {
 		var self = this;
 		var unit = self._entity;
-
-		if (!taro.isServer) return;
 		var baseEntityStats = taro.game.getAsset('unitTypes', unit._stats['type']);
 		if (!baseEntityStats || !buff) {
 			return;
 		};
-		if (buff.effects.attributes) {
+
+		if (!taro.isServer && buff.effects.attributes) {
 			_.forEach(buff.effects.attributes, function (value, attrKey) {
 				var selectedAttribute = unit._stats.attributes[attrKey];
 				if (selectedAttribute) {
@@ -92,17 +90,18 @@ var BuffComponent = TaroEntity.extend({
 						var newValue = Math.min(newMax, Math.max(selectedAttribute.min, currentAttributeValue));
 						unit.attribute.setMax(attrKey, newMax);
 						unit.attribute.update(attrKey, newValue, true);
-					}
-				}
+					};
+				};
 			});
-		}
+		};
+
 		var index = unit._stats.buffs.map(e => e.id).indexOf(buff.id);
-		unit.streamUpdateData([{ buff: {data: buff.id, action: 'remove', index: index}}]);
+		self.removeBuffIcon(buff.id);
 		if (buff.effects.stuns) {
 			if (unit._stats.buffs.every(item => item == buff || !item.effects.stuns)) {
-				unit.streamUpdateData([{ stun: false }]);
-			}
-		}
+				unit._stats.isDisabled = false;
+			};
+		};
 		unit._stats.buffs.splice(index, 1);
 	},
 
@@ -110,7 +109,7 @@ var BuffComponent = TaroEntity.extend({
 		var self = this;
 		var entity = self._entity;
 		var ownerPlayer = entity.getOwner();
-		if (ownerPlayer && entity._stats.clientId === taro.network.id() && ownerPlayer._stats.selectedUnitId == entity.id()) {
+		if (!taro.isServer && ownerPlayer && entity._stats.clientId === taro.network.id() && ownerPlayer._stats.selectedUnitId == entity.id()) {
 			$('#buff-icons').append($('<div/>', {
 					id: `${buff.id}`,
 					name: buff.name,
@@ -131,31 +130,33 @@ var BuffComponent = TaroEntity.extend({
 					style: `animation: ${(buff.timeLimit - Date.now()) / 1000}s linear cd-animation forwards;`
 				})
 			).on("animationend", function() {
-				self.removeBuffIcon(buff.id)
+				self.removeBuffIcon(buff.id);
 			}).popover({
 				html: true,
 				animation: false,
 				trigger: 'manual'
 			}).on('mouseenter', function () {
+				$('.popover').popover('hide');
 				$(this).popover('show');
-				console.log('buff')
 			});
-		}		
+		};
 	},
 
 	removeBuffIcon (buffId) {
 		var self = this;
 		var entity = self._entity;
 		var ownerPlayer = entity.getOwner();
-		if (ownerPlayer && entity._stats.clientId === taro.network.id() && ownerPlayer._stats.selectedUnitId == entity.id()) {
+		if (!taro.isServer && ownerPlayer && entity._stats.clientId === taro.network.id() && ownerPlayer._stats.selectedUnitId == entity.id()) {
 			$(`#${buffId}`).remove();
-		}
+		};
 	},
 
 	updateBuffIcon (buff) {
-		var entity = this._entity;
+		var self = this;
+		var entity = self._entity;
 		var ownerPlayer = entity.getOwner();
-		if (ownerPlayer && entity._stats.clientId === taro.network.id() && ownerPlayer._stats.selectedUnitId == entity.id()) {
+		
+		if (!taro.isServer && ownerPlayer && entity._stats.clientId === taro.network.id() && ownerPlayer._stats.selectedUnitId == entity.id()) {
 			var element = $(`#${buff.id}`);
 			if (buff.stacks > 1) {
 				element.find('small').text(buff.stacks);
@@ -167,18 +168,18 @@ var BuffComponent = TaroEntity.extend({
 				style: `animation: ${buff.duration / 1000}s linear cd-animation forwards;`
 				})
 			);
-		}	
+		};	
 	},
 
 	updateBuffList () {
 		var self = this;
 		var entity = self._entity;
 		var ownerPlayer = entity.getOwner();
-		if (ownerPlayer && entity._stats.clientId === taro.network.id() && ownerPlayer._stats.selectedUnitId == entity.id()) {
+		if (!taro.isServer && ownerPlayer && entity._stats.clientId === taro.network.id() && ownerPlayer._stats.selectedUnitId == entity.id()) {
 			$('#buff-icons').empty();
 			entity._stats.buffs.forEach(function(buff){
 				self.createBuffIcon(buff);
-			})
+			});
 		};
 	}
 

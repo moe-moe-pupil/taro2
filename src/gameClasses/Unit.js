@@ -83,7 +83,7 @@ var Unit = TaroEntityPhysics.extend({
 		self.particleEmitters = {};
 
 		self._stats.buffs = [];
-		self._stats.settings = {isStunned: false};
+		self._stats.isDisabled = false;
 
 		if (taro.isServer) {
 			// store mapping between clientIds (to whom minimap unit of this unit is visible)
@@ -1519,25 +1519,11 @@ var Unit = TaroEntityPhysics.extend({
 						}
 						break;
 					case 'buff':
-						if (taro.isClient) {
-							switch (newValue.action) {
-								case "create":
-									self._stats.buffs.push(newValue.data);
-									self.buff.createBuffIcon(newValue.data);
-									break;
-								case "remove":
-									self._stats.buffs.splice(newValue.index, 1);
-									self.buff.removeBuffIcon(newValue.data);
-									break;
-								case "update":
-									self._stats.buffs[newValue.index] = newValue.data;
-									self.buff.updateBuffIcon(newValue.data);
-									break;
-							};
+						if (newValue.action == 'add') {
+							self.buff.addBuff(newValue.data, newValue.duration);
+						} else {
+							self.buff.removeBuff(newValue.data);
 						};
-						break;
-					case 'stun':
-						self._stats.settings.isStunned = newValue;
 						break;
 				}
 
@@ -1826,8 +1812,7 @@ var Unit = TaroEntityPhysics.extend({
 					// rotate unit if angleToTarget is set
 					if (self.angleToTarget != undefined && !isNaN(self.angleToTarget) &&
 						this._stats.controls && this._stats.controls.mouseBehaviour.rotateToFaceMouseCursor &&
-						this._stats.currentBody && !this._stats.currentBody.fixedRotation &&
-						this._stats.settings && !this._stats.settings.isStunned
+						this._stats.currentBody && !this._stats.currentBody.fixedRotation && !this._stats.isDisabled
 					) {
 						self.rotateTo(0, 0, self.angleToTarget);
 					}
@@ -1882,7 +1867,7 @@ var Unit = TaroEntityPhysics.extend({
 
 				taro.unitBehaviourCount++; // for debugging
 				// apply movement if it's either human-controlled unit, or ai unit that's currently moving
-				if (self._stats.settings && !self._stats.settings.isStunned){
+				if (!self._stats.isDisabled){
 					if (self.body && vector && (vector.x != 0 || vector.y != 0)) {
 						// console.log('unit movement 2', vector);
 						if (self._stats.controls) {
@@ -1924,19 +1909,19 @@ var Unit = TaroEntityPhysics.extend({
 		}
 
 		// if entity (unit/item/player/projectile) has attribute, run regenerate
-		if (taro.isServer || (taro.physics && taro.isClient && taro.client.selectedUnit == this && taro.game.cspEnabled)) {
-			if (this._stats.buffs && this._stats.buffs.length > 0) {
-				this._stats.buffs.forEach(function(buff){
-					if (buff.timeLimit < Date.now()) {
-						self.buff.removeBuff(buff);
-					}
-				})
-			}
-			
+		if (taro.isServer || (taro.physics && taro.isClient && taro.client.selectedUnit == this && taro.game.cspEnabled)) {	
 			if (this.attribute) {
 				this.attribute.regenerate();
 			}
 		}
+
+		if (this._stats.buffs && this._stats.buffs.length > 0) {
+			this._stats.buffs.forEach(function(buff){
+				if (buff.timeLimit < Date.now()) {
+					self.buff.removeBuff(buff);
+				};
+			});
+		};
 
 		if (taro.physics && taro.physics.engine != 'CRASH') {
 			this.processBox2dQueue();

@@ -2252,7 +2252,8 @@ var ActionComponent = TaroEntity.extend({
 						var buff = taro.game.getAsset('buffTypes', buffId);
 
 						if (entity && entity._stats.buffs && buff && duration) {
-							entity.buff.applyBuff(buff, duration); 
+							buff.id = '_' + Math.random().toString(36).substring(2, 9);
+							entity.streamUpdateData([{ buff: {data: buff, action: 'add', duration: duration}}]);
 						};
 						break;
 					
@@ -2268,7 +2269,7 @@ var ActionComponent = TaroEntity.extend({
 									buffsToRemove.push(item);
 								};
 							});
-							buffsToRemove.forEach(item => unit.buff.removeBuff(item))		
+							buffsToRemove.forEach(item => unit.streamUpdateData([{ buff: {data: item, action: 'remove'}}]));	
 						};
 						break;
 
