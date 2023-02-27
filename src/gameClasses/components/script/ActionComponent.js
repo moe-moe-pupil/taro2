@@ -2245,15 +2245,12 @@ var ActionComponent = TaroEntity.extend({
 
 					case 'giveBuffToUnit':
 
-						var buffId = self._script.variable.getValue(action.buff, vars);
+						var buff = self._script.variable.getValue(action.buff, vars);
 						var entity = self._script.variable.getValue(action.entity, vars);
 						var duration = self._script.variable.getValue(action.number, vars);
-						
-						var buff = taro.game.getAsset('buffTypes', buffId);
 
 						if (entity && entity._stats.buffs && buff && duration) {
-							buff.id = '_' + Math.random().toString(36).substring(2, 9);
-							entity.streamUpdateData([{ buff: {data: buff, action: 'add', duration: duration}}]);
+							entity.buff.addBuff(buff, duration);
 						};
 						break;
 					
@@ -2263,13 +2260,7 @@ var ActionComponent = TaroEntity.extend({
 						var buff = taro.game.getAsset('buffTypes', buffId);
 
 						if(unit && unit._stats && unit._stats.buffs && buff){
-							var buffsToRemove = []
-							unit._stats.buffs.forEach(function(item){
-								if (item.name == buff.name) {
-									buffsToRemove.push(item);
-								};
-							});
-							buffsToRemove.forEach(item => unit.streamUpdateData([{ buff: {data: item, action: 'remove'}}]));	
+							unit.streamUpdateData([{ buff: {data: buff, action: 'remove'}}]);	
 						};
 						break;
 

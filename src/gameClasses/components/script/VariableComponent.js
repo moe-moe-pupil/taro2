@@ -1905,6 +1905,28 @@ var VariableComponent = TaroEntity.extend({
 					}
 
 					break;
+				
+				/* buff */
+				case 'customBuff':
+					var name = self.getValue(text.name, vars);
+					var description = self.getValue(text.description, vars);
+					var attribute = self.getValue(text.attribute, vars);
+					var number = self.getValue(text.number, vars);
+					var image = self.getValue(text.image, vars);
+
+					if (name && description && attribute && number && image) {
+						returnValue = {
+							name: name, 
+							description: description,
+							effects: {attributes: {}, stuns: false},
+							image: image,
+							maxStacks: 1,
+							unique: true
+						};
+						returnValue.effects.attributes[attribute] = number;
+						return returnValue;
+					};
+					break;
 
 				case 'undefinedValue':
 					returnValue = undefined;

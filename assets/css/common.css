@@ -137,6 +137,9 @@ body {
     background-color: rgba(147, 147, 147, 0.515);
     height: 100%;
     width: 100%;
+    border-width: 0px 0.11rem 0px 0px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.883);
 }
 
 @keyframes cd-animation {

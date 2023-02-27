@@ -1519,10 +1519,15 @@ var Unit = TaroEntityPhysics.extend({
 						}
 						break;
 					case 'buff':
-						if (newValue.action == 'add') {
-							self.buff.addBuff(newValue.data, newValue.duration);
-						} else {
-							self.buff.removeBuff(newValue.data);
+						if (taro.isClient) {
+							switch (newValue.action) {
+								case 'add':
+									self.buff.addBuff(newValue.data, newValue.duration);
+									break;
+								case 'remove':
+									self.buff.removeBuffType(newValue.data);
+									break;
+							};
 						};
 						break;
 				}
@@ -1915,13 +1920,7 @@ var Unit = TaroEntityPhysics.extend({
 			}
 		}
 
-		if (this._stats.buffs && this._stats.buffs.length > 0) {
-			this._stats.buffs.forEach(function(buff){
-				if (buff.timeLimit < Date.now()) {
-					self.buff.removeBuff(buff);
-				};
-			});
-		};
+		this.buff.update();
 
 		if (taro.physics && taro.physics.engine != 'CRASH') {
 			this.processBox2dQueue();
