@@ -296,7 +296,7 @@ canvas {
 }
 
 .popover {
-  z-index: 120000 !important;
+  z-index: 120000;
 }
 
 #counter {
