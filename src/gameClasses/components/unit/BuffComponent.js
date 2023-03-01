@@ -60,7 +60,7 @@ var BuffComponent = TaroEntity.extend({
 			self.createBuffIcon(newBuff);
 		};
 		
-		if (!taro.isServer && buff.effects.attributes) {
+		if (taro.isServer && buff.effects.attributes) {
 			_.forEach(buff.effects.attributes, function (value, attrKey) {
 				var selectedAttribute = unit._stats.attributes[attrKey];
 				if (selectedAttribute) {
@@ -87,7 +87,7 @@ var BuffComponent = TaroEntity.extend({
 			return;
 		};
 
-		if (!taro.isServer && buff.effects.attributes) {
+		if (taro.isServer && buff.effects.attributes) {
 			_.forEach(buff.effects.attributes, function (value, attrKey) {
 				var selectedAttribute = unit._stats.attributes[attrKey];
 				if (selectedAttribute) {

@@ -1519,15 +1519,15 @@ var Unit = TaroEntityPhysics.extend({
 						}
 						break;
 					case 'buff':
-						if (taro.isClient) {
-							switch (newValue.action) {
-								case 'add':
+						switch (newValue.action) {
+							case 'add':
+								if (taro.isClient) {
 									self.buff.addBuff(newValue.data, newValue.duration);
-									break;
-								case 'remove':
-									self.buff.removeBuffType(newValue.data);
-									break;
-							};
+								}
+								break;
+							case 'remove':
+								self.buff.removeBuffType(newValue.data);
+								break;
 						};
 						break;
 				}
