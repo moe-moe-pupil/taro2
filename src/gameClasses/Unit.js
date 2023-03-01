@@ -39,7 +39,8 @@ var Unit = TaroEntityPhysics.extend({
 		self.parseEntityObject(self._stats);
 		self.addComponent(InventoryComponent)
 			.addComponent(AbilityComponent)
-			.addComponent(AttributeComponent); // every units gets one
+			.addComponent(AttributeComponent) // every units gets one
+			.addComponent(BuffComponent);
 
 		self.addComponent(ScriptComponent); // entity-requireScriptLoading
 		if (unitData && unitData) {
@@ -82,6 +83,7 @@ var Unit = TaroEntityPhysics.extend({
 		self.particleEmitters = {};
 
 		self._stats.buffs = [];
+		self._stats.isDisabled = false;
 
 		if (taro.isServer) {
 			// store mapping between clientIds (to whom minimap unit of this unit is visible)
@@ -915,77 +917,6 @@ var Unit = TaroEntityPhysics.extend({
 		}
 	},
 
-	addAttributeBuff: function (attributeId, value, time, percentage) {
-		var self = this;
-		if (!taro.isServer) return;
-		// 1. store the unit's current attribute values. let's say we had 500/600 HP (base max 100hp)
-		var currentType = this._category === 'unit' ? 'unitTypes' : 'playerTypes';
-		var currentEntityTypeId = this._category === 'unit' ? 'type' : 'playerTypeId';
-		var baseEntityStats = taro.game.getAsset(currentType, this._stats[currentEntityTypeId]);
-		if (!baseEntityStats) {
-			return;
-		}
-
-		if (!time) {
-			return;
-		}
-		var timeLimit = Date.now() + time;
-		var unit = self;
-
-		if (attributeId && value && unit) {
-			var selectedAttribute = this._stats.attributes[attributeId];
-			if (selectedAttribute) {
-				var currentAttributeValue = parseFloat(selectedAttribute.value) || 1;
-				var maxValue = parseFloat(selectedAttribute.max);
-
-				if (currentAttributeValue != undefined) {
-					if (percentage == true) {
-						var newMax = maxValue * (1 + parseFloat(value) / 100);
-						var newValue = currentAttributeValue * (1 + parseFloat(value) / 100);
-						this._stats.buffs.push({ attrId: attributeId, value: newMax - maxValue, timeLimit: timeLimit, percentage: percentage });
-					} else {
-						var newMax = maxValue + parseFloat(value);
-						var newValue = Math.min(newMax, Math.max(selectedAttribute.min, currentAttributeValue)) + value;
-						this._stats.buffs.push({ attrId: attributeId, value: value, timeLimit: timeLimit, percentage: percentage });
-					}
-
-					this.attribute.setMax(attributeId, newMax);
-					this.attribute.update(attributeId, newValue, true);
-				}
-			}
-		}
-	},
-
-	removeAttributeBuff: function (attributeId, value, index) {
-		var self = this;
-		if (!taro.isServer) return;
-		// 1. store the unit's current attribute values. let's say we had 500/600 HP (base max 100hp)
-		var currentType = this._category === 'unit' ? 'unitTypes' : 'playerTypes';
-		var currentEntityTypeId = this._category === 'unit' ? 'type' : 'playerTypeId';
-		var baseEntityStats = taro.game.getAsset(currentType, this._stats[currentEntityTypeId]);
-		if (!baseEntityStats) {
-			return;
-		}
-		var unit = self;
-
-		if (attributeId && value && unit) {
-			var selectedAttribute = this._stats.attributes[attributeId];
-			if (selectedAttribute) {
-				var currentAttributeValue = parseFloat(selectedAttribute.value) || 1;
-				var maxValue = parseFloat(selectedAttribute.max);
-
-				if (currentAttributeValue != undefined) {
-					var newMax = maxValue - parseFloat(value);
-					var newValue = Math.min(newMax, Math.max(selectedAttribute.min, currentAttributeValue));
-
-					this.attribute.setMax(attributeId, newMax);
-					this.attribute.update(attributeId, newValue, true);
-					this._stats.buffs.splice(index, 1);
-				}
-			}
-		}
-	},
-
 	renderMobileControl: function () {
 		var self = this;
 
@@ -1587,6 +1518,18 @@ var Unit = TaroEntityPhysics.extend({
 							self.setOwnerPlayer(newValue);
 						}
 						break;
+					case 'buff':
+						switch (newValue.action) {
+							case 'add':
+								if (taro.isClient) {
+									self.buff.addBuff(newValue.data, newValue.duration);
+								}
+								break;
+							case 'remove':
+								self.buff.removeBuffType(newValue.data);
+								break;
+						};
+						break;
 				}
 
 
@@ -1874,7 +1817,7 @@ var Unit = TaroEntityPhysics.extend({
 					// rotate unit if angleToTarget is set
 					if (self.angleToTarget != undefined && !isNaN(self.angleToTarget) &&
 						this._stats.controls && this._stats.controls.mouseBehaviour.rotateToFaceMouseCursor &&
-						this._stats.currentBody && !this._stats.currentBody.fixedRotation
+						this._stats.currentBody && !this._stats.currentBody.fixedRotation && !this._stats.isDisabled
 					) {
 						self.rotateTo(0, 0, self.angleToTarget);
 					}
@@ -1929,19 +1872,21 @@ var Unit = TaroEntityPhysics.extend({
 
 				taro.unitBehaviourCount++; // for debugging
 				// apply movement if it's either human-controlled unit, or ai unit that's currently moving
-				if (self.body && vector && (vector.x != 0 || vector.y != 0)) {
-					// console.log('unit movement 2', vector);
-					if (self._stats.controls) {
-						switch (self._stats.controls.movementMethod) { // velocity-based movement
-							case 'velocity':
-								self.setLinearVelocity(vector.x, vector.y);
-								break;
-							case 'force':
-								self.applyForce(vector.x, vector.y);
-								break;
-							case 'impulse':
-								self.applyImpulse(vector.x, vector.y);
-								break;
+				if (!self._stats.isDisabled){
+					if (self.body && vector && (vector.x != 0 || vector.y != 0)) {
+						// console.log('unit movement 2', vector);
+						if (self._stats.controls) {
+							switch (self._stats.controls.movementMethod) { // velocity-based movement
+								case 'velocity':
+									self.setLinearVelocity(vector.x, vector.y);
+									break;
+								case 'force':
+									self.applyForce(vector.x, vector.y);
+									break;
+								case 'impulse':
+									self.applyImpulse(vector.x, vector.y);
+									break;
+							}
 						}
 					}
 				}
@@ -1969,19 +1914,13 @@ var Unit = TaroEntityPhysics.extend({
 		}
 
 		// if entity (unit/item/player/projectile) has attribute, run regenerate
-		if (taro.isServer || (taro.physics && taro.isClient && taro.client.selectedUnit == this && taro.game.cspEnabled)) {
-			if (this._stats.buffs && this._stats.buffs.length > 0) {
-				for (let i = 0; i < this._stats.buffs.length; i++) {
-					var buff = this._stats.buffs[i];
-					if (buff.timeLimit < Date.now()) {
-						this.removeAttributeBuff(buff.attrId, buff.value, i);
-					}
-				}
-			}
+		if (taro.isServer || (taro.physics && taro.isClient && taro.client.selectedUnit == this && taro.game.cspEnabled)) {	
 			if (this.attribute) {
 				this.attribute.regenerate();
 			}
 		}
+
+		this.buff.update();
 
 		if (taro.physics && taro.physics.engine != 'CRASH') {
 			this.processBox2dQueue();

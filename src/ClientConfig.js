@@ -47,6 +47,7 @@ var taroClientConfig = {
 		'/gameClasses/components/unit/AIComponent.js',
 		'/gameClasses/components/unit/AbilityComponent.js',
 		'/gameClasses/components/unit/AttributeComponent.js',
+		'/gameClasses/components/unit/BuffComponent.js',
 
 		/* Standard game scripts */
 		'/gameClasses/DeveloperMode.js',

@@ -2243,53 +2243,25 @@ var ActionComponent = TaroEntity.extend({
 						}
 						break;
 
-					case 'addAttributeBuffToUnit':
+					case 'giveBuffToUnit':
 
-						var attrId = self._script.variable.getValue(action.attribute, vars);
-						var value = self._script.variable.getValue(action.value, vars);
+						var buff = self._script.variable.getValue(action.buff, vars);
 						var entity = self._script.variable.getValue(action.entity, vars);
-						var time = self._script.variable.getValue(action.time, vars);
-						if (entity && self.entityCategories.indexOf(entity._category) > -1 && entity._stats.attributes && entity._stats.attributes[attrId] != undefined && value != undefined && entity._stats.buffs) {
-							var isAttributeVisible = false;
+						var duration = self._script.variable.getValue(action.number, vars);
 
-							/* if (entity._category === 'player') {
-                                isAttributeVisible = !!attribute.isVisible;
-                            }
-                            else {
-                                isAttributeVisible = attribute.isVisible instanceof Array && attribute.isVisible.length > 0;
-                            } */
-
-							entity.addAttributeBuff(attrId, value, time, false); // update attribute, and check for attribute becoming 0
-						}
-						break;
-
-					case 'addPercentageAttributeBuffToUnit':
-
-						var attrId = self._script.variable.getValue(action.attribute, vars);
-						var value = self._script.variable.getValue(action.value, vars);
-						var entity = self._script.variable.getValue(action.entity, vars);
-						var time = self._script.variable.getValue(action.time, vars);
-						if (entity && self.entityCategories.indexOf(entity._category) > -1 && entity._stats.attributes && entity._stats.attributes[attrId] != undefined && value != undefined && entity._stats.buffs) {
-							var isAttributeVisible = false;
-
-							/* if (entity._category === 'player') {
-                                isAttributeVisible = !!attribute.isVisible;
-                            }
-                            else {
-                                isAttributeVisible = attribute.isVisible instanceof Array && attribute.isVisible.length > 0;
-                            } */
-
-							entity.addAttributeBuff(attrId, value, time, true); // update attribute, and check for attribute becoming 0
-						}
+						if (entity && entity._stats.buffs && buff && duration) {
+							entity.buff.addBuff(buff, duration);
+						};
 						break;
 					
-					case 'removeAllAttributeBuffs':
-						var unit = self._script.variable.getValue(action.unit, vars)
-						if(unit && unit._stats && unit._stats.buffs){
-							for(let i = 0; i < unit._stats.buffs.length; i++){
-								unit._stats.buffs[i].timeLimit = 0;
-							}
-						}
+					case 'removeBuffFromUnit':
+						var unit = self._script.variable.getValue(action.entity, vars);
+						var buffId = self._script.variable.getValue(action.buff, vars);
+						var buff = taro.game.getAsset('buffTypes', buffId);
+
+						if(unit && unit._stats && unit._stats.buffs && buff){
+							unit.streamUpdateData([{ buff: {data: buff, action: 'remove'}}]);	
+						};
 						break;
 
 					case 'moveEntity':
