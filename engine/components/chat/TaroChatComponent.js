@@ -109,6 +109,7 @@ var TaroChatComponent = TaroEventingClass.extend({
 					msgDiv = $('<div><span class=\'author\' style=\'color: #99F000;\'></span><span class=\'msg ml-1\'></span></div>');
 					$(msgDiv).find('.author').text(player._stats.name + ": ");
 					$(msgDiv).find('.msg').text(msgData.text);
+					window.reactApp?.pushMessageToChat && window.reactApp.pushMessageToChat({ author: player._stats.name, message: msgData.text, from: 'user', userId: player._stats.userId });
 				}
 			} else // system message
 			{
@@ -121,10 +122,12 @@ var TaroChatComponent = TaroEventingClass.extend({
 				} else {
 					msgDiv.text(`* ${msgData.text} *`);
 				}
+
+				window.reactApp?.pushMessageToChat && window.reactApp.pushMessageToChat({ message: msgData.text, isHtml: msgData.isHtml, from: 'system' });
 			}
 
 			// append new message for both mobile & web chat-history div
-			$('#chat-history').each(function () {
+			$('#mobile-chat-box #chat-history').each(function () {
 				messageCount = $(this).find('div').length;
 				if (messageCount > 50) {
 					$(this).find('div:first-child').remove();
