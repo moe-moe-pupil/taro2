@@ -576,6 +576,7 @@ var TaroInputComponent = TaroEventingClass.extend({
 	},
 	_chatHandler: function (e) {
 		var isChatInputHidden = $('#chat-message-input').css('display') === 'none';
+
 		if (e.keyCode === 13) {
 			// ignore enter click if modal is open because it was pressed to skip text
 			var isModalOpen = $('.modal').hasClass('show');
@@ -600,7 +601,8 @@ var TaroInputComponent = TaroEventingClass.extend({
 
 				setTimeout(function () {
 					$('#message').focus();
-				}, 0);
+				}, 1);
+
 				// }
 				// else {
 				// 	$('#enter-email-modal').modal({
