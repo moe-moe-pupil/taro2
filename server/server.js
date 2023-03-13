@@ -727,7 +727,50 @@ var Server = TaroClass.extend({
 			});
 		}
 	},
-
+	
+	sendCoinsToPlayer: function (userId, coins) {
+		if (userId && coins) {
+			taro.clusterClient && taro.clusterClient.sendCoinsToPlayer({
+				creatorId: taro.game.data.defaultData.owner,
+				userId,
+				coins,
+				game: taro.game.data.defaultData._id,
+			});
+		}
+	},
+	
+	sendCoinsToPlayerCallback: function (body) {
+		if (body) {
+			if (body.status === 'success') {
+				if (body.message && body.message.userId && body.message.creatorId) {
+					const {
+						updatedCoinsCreator,
+						updatedCoinsPlayer,
+						creatorId,
+						userId
+					} = body.message;
+					
+					var creator = taro.$$('player').find(function (player) {
+						return player && player._stats && player._stats.userId == creatorId;
+					});
+					if (creator) {
+						creator.streamUpdateData([{ coins: updatedCoinsCreator }]);
+					}
+					
+					var player = taro.$$('player').find(function (player) {
+						return player && player._stats && player._stats.userId == userId;
+					});
+					if (player) {
+						player.streamUpdateData([{ coins: updatedCoinsPlayer }]);
+					}
+				}
+			}
+			if (body.status === 'error') {
+				console.log('error in sending coins')
+			}
+		}
+	},
+	
 	consumeCoinFromUser: function (player, coins, boughtItemId) {
 		var self = this;
 		if (player && coins && (taro.game.data.defaultData.tier >= 2)) {
