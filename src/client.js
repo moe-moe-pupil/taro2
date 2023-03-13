@@ -844,7 +844,9 @@ const Client = TaroEventingClass.extend({
 	//
 	joinGame: function() {
 
-		let isAdBlockEnabled = true;
+		// if the AdInPlay player is initialised, means the ad blocker is not enabled
+		let isAdBlockEnabled = typeof window?.aiptag?.adplayer === 'undefined';
+		
 		const data = {
 			number: (Math.floor(Math.random() * 999) + 100) // yeah ok cool, why?
 		};
@@ -869,32 +871,7 @@ const Client = TaroEventingClass.extend({
 		if (window.isStandalone) {
 
 			isAdBlockEnabled = false;
-
-			if (typeof adBlockStatus == 'function') {
-
-				adBlockStatus(false);
-			}
-
-		} else {
-
-			$.ajax(
-				'/showads.js',
-				{
-					async: false,
-					success: () => {
-						isAdBlockEnabled = false;
-						adBlockStatus(true);
-					},
-					fail: () => {
-						adBlockStatus(true);
-					}
-				}
-			);
-			//notify for ad block
-			if (window.isAdBlockEnabled) {
-
-				notifyAboutAdBlocker();
-			}
+			
 		}
 
 		// old comment => 'show popover on settings icon for low fram rate'
