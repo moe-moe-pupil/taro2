@@ -781,6 +781,10 @@ var ServerNetworkEvents = {
 			player.selectUnit(data.unitId);
 		}
 	},
+	
+	_onPlayAdCallback: function (data, clientId) {
+		taro.ad.playCallback(data, clientId);
+	},
 
 	_onSomeBullshit: function () {
 		//bullshit
