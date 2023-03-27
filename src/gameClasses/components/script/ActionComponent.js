@@ -487,7 +487,19 @@ var ActionComponent = TaroEntity.extend({
 							taro.server.sendCoinsToPlayer(userId, coins);
 						}
 						break;
+					
+
+					// fee is deducted from the owner end
+					case 'sendCoinsToPlayer2':
+						var coins = taro.variable.getValue(action.coins, vars);
+						var player = taro.variable.getValue(action.player, vars);
+						var userId = player && player._stats && player._stats.userId;
 						
+						if (player && userId && coins && Math.floor(coins) > 0) {
+							taro.server.sendCoinsToPlayer(userId, coins, true);
+						}
+						break;
+					
 						/* UI */
 					case 'showUiTextForPlayer':
 						if (entity && entity._stats) {

@@ -720,7 +720,7 @@ var Server = TaroClass.extend({
 		}
 	},
 	
-	sendCoinsToPlayer: function (userId, coins) {
+	sendCoinsToPlayer: function (userId, coins, deductFeeFromOwnerBalance = false) {
 		coins = Math.floor(coins);
 		if (userId && coins) {
 			taro.clusterClient && taro.clusterClient.sendCoinsToPlayer({
@@ -728,6 +728,7 @@ var Server = TaroClass.extend({
 				userId,
 				coins,
 				game: taro.game.data.defaultData._id,
+				deductFeeFromOwnerBalance
 			});
 		}
 	},
