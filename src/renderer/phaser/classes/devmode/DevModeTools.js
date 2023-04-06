@@ -65,6 +65,7 @@ var DevModeTools = /** @class */ (function (_super) {
         toolButtonsContainer.width = 120;
         toolButtonsContainer.height = 170;
         scene.add.existing(toolButtonsContainer);
+        new DevToolButton(_this, 'save map', 'Save map (C)', 'save current changes', null, 0, -68, 116, toolButtonsContainer, _this.saveMap.bind(_this));
         _this.modeButtons = [];
         _this.modeButtons.push(new DevToolButton(_this, '', 'Cursor Tool (C)', 'interact with regions and entities', 'cursor', 0, 0, 56, toolButtonsContainer, _this.cursor.bind(_this)), new DevToolButton(_this, '', 'Region Tool (R)', 'draw new region', 'region', 60, 0, 56, toolButtonsContainer, _this.drawRegion.bind(_this)), new DevToolButton(_this, '', 'Stamp Brush (B)', 'LMB: place selected tiles. RMB: copy tiles', 'stamp', 0, 34, 56, toolButtonsContainer, _this.brush.bind(_this)), new DevToolButton(_this, '', 'Eraser (E)', 'delete tiles from selected layer', 'eraser', 60, 34, 56, toolButtonsContainer, _this.emptyTile.bind(_this)), new DevToolButton(_this, '', 'Bucket Fill (F)', 'fill an area with the selected tile', 'fill', 0, 68, 56, toolButtonsContainer, _this.fill.bind(_this)));
         _this.cursorButton = _this.modeButtons[0];
@@ -229,6 +230,9 @@ var DevModeTools = /** @class */ (function (_super) {
                 }
             }
         });
+    };
+    DevModeTools.prototype.saveMap = function () {
+        console.log('Saving map...');
     };
     DevModeTools.prototype.cursor = function () {
         this.highlightModeButton(0);

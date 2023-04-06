@@ -80,6 +80,8 @@ class DevModeTools extends Phaser.GameObjects.Container {
 		toolButtonsContainer.height = 170;
 		scene.add.existing(toolButtonsContainer);
 
+		new DevToolButton (this, 'save map', 'Save map (C)', 'save current changes', null, 0, -68, 116, toolButtonsContainer, this.saveMap.bind(this));
+		
 		this.modeButtons = [];
 		this.modeButtons.push (
 			new DevToolButton (this, '', 'Cursor Tool (C)', 'interact with regions and entities', 'cursor', 0, 0, 56, toolButtonsContainer, this.cursor.bind(this)),
@@ -257,6 +259,10 @@ class DevModeTools extends Phaser.GameObjects.Container {
 				}
 			}
 		});
+	}
+
+	saveMap(): void {
+		console.log('Saving map...');
 	}
 
 	cursor(): void {
