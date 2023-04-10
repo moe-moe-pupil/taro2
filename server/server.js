@@ -755,12 +755,43 @@ var Server = TaroClass.extend({
 						return player && player._stats && player._stats.userId == userId;
 					});
 					if (player) {
+						taro.trigger.fire('sendCoinsSuccess', { playerId: player.id() });
 						player.streamUpdateData([{ coins: updatedCoinsPlayer }]);
 					}
 				}
 			}
 			if (body.status === 'error') {
-				console.log('error in sending coins')
+				console.log('error in sending coins');
+
+				if (!body.reason || !body.message) {
+					return;
+				}
+
+				const reason = body.reason;				
+
+				const {
+					creatorId,
+					userId
+				} = body.message;
+
+				let player = taro.$$('player').find(function (player) {
+					return player && player._stats && player._stats.userId == userId;
+				});
+
+				if (!player) {
+					return;
+				}
+
+				switch (reason) {
+					case 'insufficient creator coins':
+						taro.trigger.fire('coinSendFailureDueToInsufficientCoins', { playerId: player.id() });
+						break;
+					case 'daily coin transfer limit exceeded':
+						taro.trigger.fire('coinSendFailureDueToDailyLimit', { playerId: player.id() });
+						break;
+					default:
+						break;
+				}
 			}
 		}
 	},
