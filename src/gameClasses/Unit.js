@@ -741,7 +741,7 @@ var Unit = TaroEntityPhysics.extend({
 		// console.log("change unit type", type)
 		// validate script component here because no client physics means no script component
 		if (taro.script && data == undefined) {
-			taro.script.errorLog('(changeUnitType) game.getAsset: invalid type: ', type);
+			taro.script.errorLog(`(changeUnitType) game.getAsset: invalid type:  ${type}`);
 			return;
 		}
 
