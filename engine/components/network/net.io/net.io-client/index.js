@@ -104,16 +104,49 @@ NetIo.Client = NetIo.EventingClass.extend({
 
 		// Create new websocket to the url
 		var distinctId = window.distinctId || '';
+		const wsUrl = `${url}?token=${gsAuthToken}&sid=${taro.client.server.id}&distinctId=${distinctId}`;
 		
+		const wsStartTime = Date.now();
+		const startTimeSinceLoad = performance.now();
 		
-		// Create new websocket to the url
-		this._socket = new WebSocket(`${url}?token=${gsAuthToken}&sid=${taro.client.server.id}&distinctId=${distinctId}`, 'netio1');
-
+		this._socket = new WebSocket(wsUrl, 'netio1');
+		
+		const traceWsReq = (action) => {
+			const endTimeSinceLoad = performance.now();
+			if (window.newrelic) {
+				window.newrelic.addPageAction('gs-websocket-connect', {
+					wsUrl: wsUrl,
+					wsAction: action,
+					wsState: this._socket.readyState,
+					wsUserId: userId,
+					wsGameSlug: gameSlug,
+					wsServerName: taro.client.server.name,
+					wsServerUrl: taro.client.server.url,
+					wsLatency: endTimeSinceLoad - startTimeSinceLoad,
+					wsStartTimeSinceLoad: startTimeSinceLoad,
+					wsEndTimeSinceLoad: endTimeSinceLoad,
+					wsStartTime,
+					wsEndTime: Date.now()
+				});
+			}
+		};
+		
 		// Setup event listeners
-		this._socket.onopen = function () { self._onOpen.apply(self, arguments); };
-		this._socket.onmessage = function () { self._onData.apply(self, arguments); };
-		this._socket.onclose = function () { self._onClose.apply(self, arguments); };
-		this._socket.onerror = function () { self._onError.apply(self, arguments); };
+		this._socket.onopen = function () {
+			traceWsReq('onopen');
+			self._onOpen.apply(self, arguments);
+		};
+		this._socket.onmessage = function () {
+			self._onData.apply(self, arguments);
+		};
+		this._socket.onclose = function () {
+			traceWsReq('onclose');
+			self._onClose.apply(self, arguments);
+		};
+		this._socket.onerror = function () {
+			traceWsReq('onerror');
+			self._onError.apply(self, arguments);
+		};
 	},
 
 	disconnect: function (reason) {
