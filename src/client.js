@@ -122,6 +122,7 @@ const Client = TaroEventingClass.extend({
 		//go fetch
 
 		taro.addComponent(GameComponent);
+		taro.addComponent(MenuUiComponent);
 		// we're going to try and insert the fetch here
 		let promise = new Promise((resolve, reject) => {
 			// if the gameJson is available as a global object, use it instead of sending another ajax request
@@ -178,20 +179,17 @@ const Client = TaroEventingClass.extend({
 			// old comment => 'components required for client-side game logic'
 			taro.addComponent(TaroNetIoComponent);
 			taro.addComponent(SoundComponent);
-
-			taro.addComponent(MenuUiComponent);
 			taro.addComponent(TradeUiComponent); // could we comment this one out?
 
 			if (taro.isMobile) {
 				taro.addComponent(MobileControlsComponent);
 			}
+
+			this.configureEngine();
 		})
-			.catch((err) => {
-				console.error(err);
-			})
-			.finally(() => {
-				this.configureEngine();
-			});
+		.catch((err) => {
+			console.error(err);
+		});
 
 		// these were under separate conditionals before. idk why.
 		if (mode == 'play') {
