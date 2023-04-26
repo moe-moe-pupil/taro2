@@ -615,9 +615,6 @@ NetIo.Server = NetIo.EventingClass.extend({
 			this._socketServerHttps = new this._websocket.Server({
 				server: this._httpsServer,
 				maxPayload: 100 * 1024, // 100 KB - The maximum allowed message size
-				verifyClient: function() {
-					console.log("wtf")
-				}
 			});
 			// this._socketServerHttps = new this._websocket.WebSocketServer({
 			// 	server: this._httpsServer
