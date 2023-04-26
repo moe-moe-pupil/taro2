@@ -691,7 +691,7 @@ var ShopComponent = TaroEntity.extend({
 	},
 
 	updateSkinList: function (itemId) {
-		debugger;
+
 		var skinItemActionButton = $(`#skin-list-${itemId} .action-button-container`);
 		skinItemActionButton.html(
 			'<button class="btn btn-sm btn-primary disabled">' +
