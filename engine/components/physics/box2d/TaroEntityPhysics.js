@@ -227,7 +227,7 @@ var TaroEntityPhysics = TaroEntity.extend({
 	},
 
 	destroyBody: function () {
-		TaroEntityPhysics.prototype.log('destroyBody');
+		//TaroEntityPhysics.prototype.log('destroyBody');
 
 		if (this.jointsAttached) {
 			for (var entityId in this.jointsAttached) {

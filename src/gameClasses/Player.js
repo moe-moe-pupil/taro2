@@ -27,6 +27,8 @@ var Player = TaroEntity.extend({
 
 		self.addComponent(AttributeComponent);
 
+		self.actionQueueSize = 0;
+
 		if (taro.isServer) {
 			this.streamMode(2);
 			// self._stats.unitId = self.getCurrentUnit().id()

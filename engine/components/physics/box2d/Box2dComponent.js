@@ -511,8 +511,40 @@ var PhysicsComponent = TaroEventingClass.extend({
 	},
 
 	queueAction: function (action) {
+		//console.log('queueAction box2d', action.type, action.entity.id());
 		// PhysicsComponent.prototype.log("queueAction: "+action.type);
+
+		var player;
+		if (action.entity) {
+			player = this.getEntityOwner(action.entity);
+		} else if (action.entityA) {
+			player = this.getEntityOwner(action.entityA);
+		} else if (action.entityB) {
+			player = this.getEntityOwner(action.entityB);
+		}
+
+		console.log('queueAction box2d', player?.id());
+
+		if (player?._stats?.controlledBy == 'human') {
+			player.actionQueueSize++;
+			if (player.actionQueueSize > 100) {
+				console.log('Ban player for big actionQueueSize', player.actionQueueSize);
+			}
+		}
+		
 		this._actionQueue.push(action);
+	},
+
+	getEntityOwner: function (entity) {
+		var player;
+		if (entity._category === 'unit') {
+			console.log('unit');
+			player = entity.getOwner();
+		} else if (entity._category === 'item') {
+			console.log('item');
+			player = entity.getOwnerUnit()?.getOwner();
+		}
+		return player;
 	},
 
 	update: function (timeElapsedSinceLastStep) {
@@ -522,10 +554,14 @@ var PhysicsComponent = TaroEventingClass.extend({
 
 		if (self && self._active && self._world) {
 			var queueSize = 0;
+			taro.$$('player').forEach((player) => {
+				player.actionQueueSize = 0;
+			});
 			if (!self._world.isLocked()) {
 				while (self._actionQueue.length > 0) {
 					var action = self._actionQueue.shift();
 					queueSize++;
+					console.log(queueSize, action)
 					if (queueSize > 1000) {
 						taro.devLog(`PhysicsComponent.js _behaviour queue looped over 1000 times. Currently processing action: ${action.type}`);
 					}
