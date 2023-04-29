@@ -692,6 +692,7 @@ NetIo.Server = NetIo.EventingClass.extend({
 				socket._token = {
 					userId: decodedToken.userId,
 					distinctId : searchParams.get('distinctId'),
+					posthogDistinctId : searchParams.get('posthogDistinctId'),
 					token,
 					tokenCreatedAt: decodedToken.createdAt
 				};
