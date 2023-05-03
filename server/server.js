@@ -74,7 +74,9 @@ if(process.env.MIXPANEL_TOKEN) {
 	global.mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN);
 }
 
-global.posthog = new PostHog('phc_DjxPNBOGS8B9w8fSaY79jd0lMT8f1yjq6v88kmmdSor', { host: 'https://app.posthog.com' } );
+if (process.env.POSTHOG_TOKEN) {
+	global.posthog = new PostHog(process.env.POSTHOG_TOKEN, { host: 'https://app.posthog.com' } );
+}
 
 process.on('exit', function () {
 	console.log('process exit called.');
