@@ -564,6 +564,15 @@ var Player = TaroEntity.extend({
 			});
 	},
 
+	isDeveloper: function() {
+		return this._stats && (
+					(this._stats.userId == taro.game.data.defaultData.owner) ||
+					taro.game.data.defaultData.invitedUsers.find(function (iu) { if (iu.user === this._stats.userId) { return true; } }) ||
+					this._stats.isUserAdmin ||
+					this._stats.isUserMod
+				);
+	},
+
 	updatePlayerHighscore: function () {
 		var self = this;
 		var scoreId = taro.game.data.settings.scoreAttributeId;
