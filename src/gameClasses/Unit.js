@@ -1527,7 +1527,7 @@ var Unit = TaroEntityPhysics.extend({
 	updateTexture: function () {
 		var self = this;
 		var defaultUnit = taro.game.getAsset('unitTypes', self._stats.type);
-		self.emit('update-texture', self._stats.cellSheet.url !== defaultUnit.cellSheet.url);
+		if (defaultUnit.cellSheet) self.emit('update-texture', self._stats.cellSheet.url !== defaultUnit.cellSheet.url);
 
 		var ownerPlayer = self.getOwner();
 		var isInvisible = self.shouldBeInvisible(ownerPlayer, taro.client.myPlayer);
