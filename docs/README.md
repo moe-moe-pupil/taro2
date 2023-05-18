@@ -20,7 +20,7 @@ Make IO games in seconds! With Moddio's drag & drop game editor, creators can ma
 - Client-side predicted projectile + unit movement (optional)
 - AI with attacking and pathfinding
 - Mobile controls
-- and more!
+- And more!
 
 # We need contributors, and we are also hiring
 First, join our [Discord](https://discord.gg/XRe8T7K) :mechanical_arm:
