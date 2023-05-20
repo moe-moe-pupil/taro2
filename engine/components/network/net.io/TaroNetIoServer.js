@@ -635,6 +635,19 @@ var TaroNetIoServer = {
 								'playTime': end - self._socketById[socket.id].start,
 							});
 						}
+
+						if (self._socketById[socket.id]?._token?.posthogDistinctId) {
+							global.posthog.capture({
+								distinctId: self._socketById[socket.id]._token.posthogDistinctId,
+								'event': 'Game Session Duration',
+								properties: {
+									'$ip': socket._remoteAddress,
+									'gameSlug': taro.game && taro.game.data && taro.game.data.defaultData && taro.game.data.defaultData.gameSlug,
+									'gameId': taro.game && taro.game.data && taro.game.data.defaultData && taro.game.data.defaultData._id,
+									'playTime': end - self._socketById[socket.id].start,
+								}
+							});
+						}
 					}
 
 					self._onClientDisconnect.apply(self, [data, socket]);
