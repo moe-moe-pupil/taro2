@@ -58,15 +58,23 @@ var taroCoreConfig = {
 		/* Engine Actual */
 		['csap', 'TaroEngine', 'core/TaroEngine.js'],
 		/* Physics Libraries */
-		//['csap', 'PhysicsComponent', './components/physics/box2d/Box2dComponent.js'],
-		['csap', 'TaroEntityPhysics', './components/physics/box2d/TaroEntityPhysics.js'],
-		/*['csap', 'TaroBox2dWorld', './components/physics/box2d/TaroBox2dDebugPainter.js'],
+		/* Box2d */
+		// ['csap', 'PhysicsComponent', './components/physics/box2d/Box2dComponent.js'],
+		// ['csap', 'TaroEntityPhysics', './components/physics/box2d/TaroEntityPhysics.js'],
+		['csap', 'TaroBox2dWorld', './components/physics/box2d/TaroBox2dDebugPainter.js'],
 		['csap', 'dists', './components/physics/box2d/dists.js'],
 		['csap', 'planck', './components/physics/box2d/dists/planck/planck.js'],
 		['csap', 'box2dweb', './components/physics/box2d/dists/box2dweb/lib_box2d.js', 'box2dweb'],
 		['csap', 'box2dninja', './components/physics/box2d/dists/box2dweb/box2d_ninja.js', 'box2dninja'],
-		['csap', 'box2dts', './components/physics/box2d/dists/flyoverbox2dts/bundle.js'],*/
-		// No crash for now
+		['csap', 'box2dts', './components/physics/box2d/dists/flyoverbox2dts/bundle.js'],
+		/* Crash */
+		['csap', 'PhysicsComponent', './components/physics/crash/CrashComponent.js'],
+		['csap', 'TaroEntityPhysics', './components/physics/crash/TaroEntityPhysics.js'],
+		['csap', 'CollisionController', './components/physics/crash/CollisionController.js'],
+		['csap', 'quickselect', './components/physics/crash/crashDependencies/quickselect.js'],
+		['csap', 'rbush', './components/physics/crash/crashDependencies/rbush.js'],
+		['csap', 'sat', './components/physics/crash/crashDependencies/sat.js'],
+		['csap', 'crash', './components/physics/crash/crashDependencies/crash.js', 'crash']
 	]
 };
 

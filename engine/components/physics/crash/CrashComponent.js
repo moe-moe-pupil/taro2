@@ -7,59 +7,63 @@ const PhysicsComponent = TaroEventingClass.extend({
 	componentId: 'physics',
 
 	init: function (entity, options) {
-		this._entity = entity;
-		// Check that the engine has not already started
-		// as this will mess everything up if it has
-		this.engine = 'CRASH';
-		if (taro._state !== 0) {
-			console.log('Cannot add box2d physics component to the taro instance once the engine has started!', 'error');
+		try{
+			this._entity = entity;
+			// Check that the engine has not already started
+			// as this will mess everything up if it has
+			this.engine = 'CRASH';
+			if (taro._state !== 0) {
+				console.log('Cannot add box2d physics component to the taro instance once the engine has started!', 'error');
+			}
+
+			this.crash = new Crash();
+			this.crash.rbush.toBBox = function (item) {
+				item.minX = item.aabb.x1;
+				item.minY = item.aabb.y1;
+				item.maxX = item.aabb.x2;
+				item.maxY = item.aabb.y2;
+
+				return item;
+			};
+
+			this.crash.SAT = Crash.SAT;
+			this.crash.Vector = Crash.SAT.Vector;
+			this.crash.Response = Crash.SAT.Response;
+			this.crash.cancel = function () {
+				this.BREAK = true;
+				return false;
+			};
+
+			this.totalBodiesCreated = 0;
+			this.physicsTickDuration = 0;
+			this.lastSecondAt = Date.now();
+			this.totalDisplacement = 0;
+			this.totalTimeElapsed = 0;
+			this.avgPhysicsTickDuration = 0;
+
+			// we should consider moving all of our collision listeners outside of the Component
+			const contactDetails = function (a, b, res, cancel) {
+
+				// since I removed triggerComponent, you'll have to move contact callback function inside crashComponent.
+				// taro.trigger._beginContactCallback({
+				// 	m_fixtureA: {
+				// 		m_body: {
+				// 			_entity: a.data.entity,
+				// 		}
+				// 	},
+				// 	m_fixtureB: {
+				// 		m_body: {
+				// 			_entity: b.data.entity,
+				// 		}
+				// 	}
+				// });
+			};
+
+			this.crash.onCollision(CollisionController);
+			this.crash.onCollision(contactDetails);
+		} catch (e) {
+			console.error(e);
 		}
-
-		this.crash = new Crash();
-		this.crash.rbush.toBBox = function (item) {
-			item.minX = item.aabb.x1;
-			item.minY = item.aabb.y1;
-			item.maxX = item.aabb.x2;
-			item.maxY = item.aabb.y2;
-
-			return item;
-		};
-
-		this.crash.SAT = Crash.SAT;
-		this.crash.Vector = Crash.SAT.Vector;
-		this.crash.Response = Crash.SAT.Response;
-		this.crash.cancel = function () {
-			this.BREAK = true;
-			return false;
-		};
-
-		this.totalBodiesCreated = 0;
-		this.physicsTickDuration = 0;
-		this.lastSecondAt = Date.now();
-		this.totalDisplacement = 0;
-		this.totalTimeElapsed = 0;
-		this.avgPhysicsTickDuration = 0;
-
-		// we should consider moving all of our collision listeners outside of the Component
-		const contactDetails = function (a, b, res, cancel) {
-
-			// since I removed triggerComponent, you'll have to move contact callback function inside crashComponent.
-			// taro.trigger._beginContactCallback({
-			// 	m_fixtureA: {
-			// 		m_body: {
-			// 			_entity: a.data.entity,
-			// 		}
-			// 	},
-			// 	m_fixtureB: {
-			// 		m_body: {
-			// 			_entity: b.data.entity,
-			// 		}
-			// 	}
-			// });
-		};
-
-		this.crash.onCollision(CollisionController);
-		this.crash.onCollision(contactDetails);
 	},
 
 	createWorld: function () {
