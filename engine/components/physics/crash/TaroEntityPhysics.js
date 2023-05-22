@@ -152,6 +152,9 @@ const TaroEntityPhysics = TaroEntity.extend({
 		}
 	},
 
+	processBox2dQueue: function () {
+	},
+
 	/**
 	 * Gets / sets the crash colliders's awake flag which determines
 	 * if it will be included as part of the physics simulation
