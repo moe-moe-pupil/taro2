@@ -499,14 +499,16 @@ var Server = TaroClass.extend({
 				//  * Significant changes below
 				//  * Let's test loading PhysicsConfig here
 				// */
-				// var taroPhysicsConfig = require('../engine/PhysicsConfig');
-				// taroPhysicsConfig.loadSelectPhysics(game.data.defaultData.physicsEngine);
-				// taroPhysicsConfig.loadPhysicsGameClasses();
+				console.log('LOADING PHYSICS CONFIG')
+				var taroPhysicsConfig = require('../engine/PhysicsConfig');
+				taroPhysicsConfig.loadSelectPhysics(game.data.defaultData.physicsEngine);
+				taroPhysicsConfig.loadPhysicsGameClasses();
 				// /*
 				//  * Significant changes above
 				// */
 
 				// Add physics and setup physics world
+				console.log('LOADING PHYSICS', PhysicsComponent)
 				taro.addComponent(PhysicsComponent)
 					.physics.sleep(true)
 					.physics.tilesizeRatio(tilesizeRatio);
@@ -566,6 +568,10 @@ var Server = TaroClass.extend({
 
 						let map = taro.scaleMap(_.cloneDeep(taro.game.data.map));
 						taro.map.load(map);
+
+						if (taro.physics.engine === 'CRASH') {
+							taro.physics.addBorders();
+						}
 
 						taro.game.start();
 

@@ -56,10 +56,12 @@ var taroPhysicsConfig = {
 	],
 
 	loadSelectPhysics: function (physicsChoice) {
+		console.log('loadSelectPhysics', physicsChoice)
 		this.loadFiles(this.taroPhysicsChoices[physicsChoice]);
 	},
 
 	loadPhysicsGameClasses: function () {
+		console.log('loadPhysicsGameClasses', this.gameClasses)
 		this.loadFiles(this.gameClasses);
 	},
 
