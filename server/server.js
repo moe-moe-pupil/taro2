@@ -317,7 +317,7 @@ var Server = TaroClass.extend({
 						return newPort = defaultPort;
 					} else {
 						console.log(`Port ${defaultPort} is already in use.`);
-						const tryNewPort = await ask('Do you want to try a different port? (enter \'y\' or \'n\'): ')
+						const tryNewPort = await ask('Do you want to try a different port? (enter \'y\' or \'n\'): ');
 						if (tryNewPort.toLowerCase() === 'y') {
 							const _port = await ask('Enter a new port number: ');
 							newPort = _port;
