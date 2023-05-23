@@ -3,19 +3,21 @@
 const publicIp = require('public-ip');
 const express = require('express');
 const helmet = require('helmet');
+const readline = require('readline');
 const path = require('path');
 const bodyParser = require('body-parser');
+const detect = require('detect-port');
 const fs = require('fs');
 const cluster = require('cluster');
 const { RateLimiterMemory } = require('rate-limiter-flexible');
 _ = require('lodash');
-const currency = require("currency.js");
+const currency = require('currency.js');
 
 const config = require('../config');
 const Console = console.constructor;
 // redirect global console object to log file
 
-function logfile (file) {
+function logfile(file) {
 	var con = new Console(fs.createWriteStream(file));
 	Object.keys(Console.prototype).forEach(function (name) {
 		console[name] = function () {
@@ -63,9 +65,9 @@ global.posthog = {
 	capture: function () {
 		// do nothing
 	},
-}
+};
 
-console.log("process.env.ENV = ", process.env.ENV)
+console.log('process.env.ENV = ', process.env.ENV);
 if (process.env.ENV == 'production') {
 	var Rollbar = require('rollbar');
 	global.rollbar = new Rollbar({
@@ -83,14 +85,14 @@ if (process.env.ENV == 'production') {
 
 // initialize mixpanel.
 var Mixpanel = require('mixpanel');
-var { PostHog } = require('posthog-node')
+var { PostHog } = require('posthog-node');
 // create an instance of the mixpanel client
-if(process.env.MIXPANEL_TOKEN) {
+if (process.env.MIXPANEL_TOKEN) {
 	global.mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN);
 }
 
 if (process.env.POSTHOG_TOKEN) {
-	global.posthog = new PostHog(process.env.POSTHOG_TOKEN, { host: 'https://app.posthog.com' } );
+	global.posthog = new PostHog(process.env.POSTHOG_TOKEN, { host: 'https://app.posthog.com' });
 }
 
 process.on('exit', function () {
@@ -294,10 +296,38 @@ var Server = TaroClass.extend({
 			}, self.retryCount * 5000);
 		});
 	},
-	startWebServer: function () {
-		const app = express();
-		const port = 80;
+	startWebServer: async function () {
+		const rl = readline.createInterface({
+			input: process.stdin,
+			output: process.stdout
+		});
+		const ask = (questionText) => {
+			return new Promise((resolve, reject) => {
+				rl.question(questionText, (input) => resolve(input));
+			});
+		};
 
+		const app = express();
+		const defaultPort = 80;
+		const port = await (async () => {
+			let newPort;
+			await detect(defaultPort)
+				.then(async (_port) => {
+					if (defaultPort == _port) {
+						return newPort = defaultPort;
+					} else {
+						console.log(`Port ${defaultPort} is already in use.`);
+						const tryNewPort = await ask('Do you want to try a different port? (enter \'y\' or \'n\'): ')
+						if (tryNewPort.toLowerCase() === 'y') {
+							const _port = await ask('Enter a new port number: ');
+							newPort = _port;
+						} else {
+							process.exit(1);
+						}
+					}
+				});
+			return newPort;
+		})();
 		app.use(bodyParser.urlencoded({ extended: false }));
 		// parse application/json
 		app.use(bodyParser.json());
@@ -688,7 +718,7 @@ var Server = TaroClass.extend({
 		taro.network.define('openDialogue', self._onSomeBullshit);
 		taro.network.define('closeDialogue', self._onSomeBullshit);
 		taro.network.define('userJoinedGame', self._onSomeBullshit);
-		
+
 		taro.network.define('kick', self._onKick);
 		taro.network.define('ban-user', self._onBanUser);
 		taro.network.define('ban-ip', self._onBanIp);
@@ -745,7 +775,7 @@ var Server = TaroClass.extend({
 			}
 		}
 	},
-	
+
 	sendCoinsToPlayer: function (userId, coins, deductFeeFromOwnerBalance = false) {
 		coins = Math.floor(coins);
 		if (userId && coins) {
@@ -758,7 +788,7 @@ var Server = TaroClass.extend({
 			});
 		}
 	},
-	
+
 	sendCoinsToPlayerCallback: function (body) {
 		if (body) {
 			if (body.status === 'success') {
@@ -769,7 +799,7 @@ var Server = TaroClass.extend({
 						creatorId,
 						userId
 					} = body.message;
-					
+
 
 					var creator = taro.$$('player').find(function (player) {
 						return player && player._stats && player._stats.userId == creatorId;
@@ -790,14 +820,14 @@ var Server = TaroClass.extend({
 				}
 			}
 			if (body.status === 'error') {
-				console.log('error in sending coins')
+				console.log('error in sending coins');
 
 				if (!body.reason || !body.message) {
 					return;
 				}
 
-				const reason = body.reason;				
-				
+				const reason = body.reason;
+
 				const {
 					creatorId,
 					userId
@@ -806,7 +836,7 @@ var Server = TaroClass.extend({
 				let player = taro.$$('player').find(function (player) {
 					return player && player._stats && player._stats.userId == userId;
 				});
-				
+
 				if (!player) {
 					return;
 				}
@@ -824,7 +854,7 @@ var Server = TaroClass.extend({
 			}
 		}
 	},
-	
+
 	consumeCoinFromUser: function (player, coins, boughtItemId) {
 		var self = this;
 		coins = Math.floor(coins);
@@ -852,13 +882,13 @@ var Server = TaroClass.extend({
 				// console.log('You are the owner');
 			}
 		}
-		
+
 		if (Object.keys(self.coinUpdate || {}).length > 0) {
 			taro.clusterClient && taro.clusterClient.consumeCoinFromUser(self.coinUpdate);
 			self.coinUpdate = {};
 		}
 	},
-	
+
 	postConsumeCoinsForUsersCallback: function (body) {
 		var self = this;
 		if (body) {
@@ -875,11 +905,11 @@ var Server = TaroClass.extend({
 				}
 			}
 			if (body.status === 'error') {
-				console.log('error in buying item')
+				console.log('error in buying item');
 			}
 		}
 	},
-	
+
 	creditAdRewardToOwner: function (data, clientId) {
 		const token = data.token;
 		if (token && data.status && clientId) {
@@ -889,18 +919,18 @@ var Server = TaroClass.extend({
 					console.log('creditAdRewardToOwner - Token has been used already', token);
 					return;
 				}
-				
-				const jwt = require("jsonwebtoken");
-				
+
+				const jwt = require('jsonwebtoken');
+
 				const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
-				const {type, clientId: decodedClientId, createdAt} = decodedToken;
-				
+				const { type, clientId: decodedClientId, createdAt } = decodedToken;
+
 				if (type === 'creditAdRewardToken' && decodedClientId === clientId) {
 					// allow transaction since token has been verified
-					
+
 					// store token for current client
 					taro.server.usedAdRewardJwts[token] = createdAt;
-					
+
 					// remove expired tokens
 					const filteredUsedAdRewardJwts = {};
 					const usedTokenEntries = Object.entries(taro.server.usedAdRewardJwts).filter(([token, tokenCreatedAt]) => (Date.now() - tokenCreatedAt) < taro.server.AD_REWARD_JWT_EXPIRES_IN);
@@ -910,13 +940,13 @@ var Server = TaroClass.extend({
 						}
 					}
 					taro.server.usedAdRewardJwts = filteredUsedAdRewardJwts;
-					
+
 				} else {
 					return;
 				}
-				
+
 				var player = taro.game.getPlayerByClientId(clientId);
-				
+
 				taro.clusterClient && taro.clusterClient.creditAdRewardToOwner({
 					creatorId: taro.game.data.defaultData.owner,
 					game: taro.game.data.defaultData._id,
@@ -924,13 +954,13 @@ var Server = TaroClass.extend({
 					clientId,
 					status: data.status,
 				});
-				
+
 			} catch (e) {
 				console.log('creditAdRewardToOwner - invalid token', e.message, data.token);
 			}
 		}
 	},
-	
+
 	creditAdRewardToOwnerCallback: function (body) {
 		if (body) {
 			if (body.status === 'success') {
@@ -939,7 +969,7 @@ var Server = TaroClass.extend({
 						updatedCoinsCreator,
 						creatorId
 					} = body.message;
-					
+
 					var creator = taro.$$('player').find(function (player) {
 						return player && player._stats && player._stats.userId == creatorId;
 					});
@@ -949,18 +979,18 @@ var Server = TaroClass.extend({
 				}
 			}
 			if (body.status === 'error') {
-				console.log('error in crediting ad-reward coins')
+				console.log('error in crediting ad-reward coins');
 			}
 		}
 	},
-	
+
 	addServerLog: function (type, reason) {
 		taro.clusterClient && taro.clusterClient.addServerLog({
 			type,
 			reason
 		});
 	},
-	
+
 	getStatus: function () {
 		var self = this;
 

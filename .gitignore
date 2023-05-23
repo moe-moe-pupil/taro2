@@ -122,3 +122,4 @@ videoChatConfig.js
 assets/js/videoChatConfig.js
 
 .idea/
+pnpm-lock.yaml
