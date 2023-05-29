@@ -1,13 +1,15 @@
 var TileEditor = /** @class */ (function () {
-    function TileEditor(gameScene, devModeScene, devModeTools) {
+    function TileEditor(gameScene, devModeScene, devModeTools, commandController) {
         var _this = this;
         this.gameScene = gameScene;
         this.devModeTools = devModeTools;
         var palette = this.tilePalette = this.devModeTools.palette;
         var gameMap = this.gameScene.tilemap;
-        this.marker = new TileMarker(this.gameScene, devModeScene, gameMap, false, 2);
-        this.paletteMarker = new TileMarker(this.devModeTools.scene, devModeScene, this.tilePalette.map, true, 1);
-        this.area = { x: 1, y: 1 };
+        this.marker = new TileMarker(this.gameScene, devModeScene, gameMap, false, 2, commandController);
+        this.paletteMarker = new TileMarker(this.devModeTools.scene, devModeScene, this.tilePalette.map, true, 1, commandController);
+        this.commandController = commandController;
+        this.paletteArea = { x: 1, y: 1 };
+        this.brushArea = { x: 1, y: 1 };
         this.selectedTile = null;
         this.selectedTileArea = [[null, null], [null, null]];
         var pointerPosition = { x: 0, y: 0 };
@@ -42,10 +44,10 @@ var TileEditor = /** @class */ (function () {
                 var palettePointerTileY = palette.map.worldToTileY(palettePoint.y);
                 if (!devModeTools.modeButtons[4].active)
                     _this.devModeTools.brush();
-                if (_this.area.x > 1 || _this.area.y > 1) {
+                if (_this.paletteArea.x > 1 || _this.paletteArea.y > 1) {
                     _this.clearTint();
-                    for (var i = 0; i < _this.area.x; i++) {
-                        for (var j = 0; j < _this.area.y; j++) {
+                    for (var i = 0; i < _this.paletteArea.x; i++) {
+                        for (var j = 0; j < _this.paletteArea.y; j++) {
                             _this.selectedTileArea[i][j] = _this.getTile(palettePointerTileX + i, palettePointerTileY + j, palette.map);
                         }
                     }
@@ -69,11 +71,11 @@ var TileEditor = /** @class */ (function () {
                 var worldPoint = gameScene.cameras.main.getWorldPoint(gameScene.input.activePointer.x, gameScene.input.activePointer.y);
                 var pointerTileX = gameMap.worldToTileX(worldPoint.x);
                 var pointerTileY = gameMap.worldToTileY(worldPoint.y);
-                if (_this.area.x > 1 || _this.area.y > 1) {
+                if (_this.brushArea.x > 1 || _this.brushArea.y > 1) {
                     _this.clearTint();
-                    for (var i = 0; i < _this.area.x; i++) {
-                        for (var j = 0; j < _this.area.y; j++) {
-                            _this.selectedTileArea[i][j] = _this.getTile(pointerTileX + i, pointerTileY + j, gameMap);
+                    for (var i = 0; i < _this.brushArea.x; i++) {
+                        for (var j = 0; j < _this.brushArea.y; j++) {
+                            _this.selectedTileArea[i][j] = _this.getTile(pointerTileX, pointerTileY, gameMap);
                         }
                     }
                     _this.marker.changePreview();
@@ -244,6 +246,7 @@ var TileEditor = /** @class */ (function () {
         }
     };
     TileEditor.prototype.update = function () {
+        var _this = this;
         if (taro.developerMode.active && taro.developerMode.activeTab === 'map') {
             var devModeScene = this.devModeTools.scene;
             var palette = this.tilePalette;
@@ -275,31 +278,64 @@ var TileEditor = /** @class */ (function () {
                     marker.graphics.setVisible(true);
                     marker.showPreview(true);
                     // Rounds down to nearest tile
-                    var pointerTileX = map.worldToTileX(worldPoint.x);
-                    var pointerTileY = map.worldToTileY(worldPoint.y);
+                    var pointerTileX_1 = map.worldToTileX(worldPoint.x);
+                    var pointerTileY_1 = map.worldToTileY(worldPoint.y);
                     // Snap to tile coordinates, but in world space
-                    marker.graphics.x = map.tileToWorldX(pointerTileX);
-                    marker.graphics.y = map.tileToWorldY(pointerTileY);
-                    marker.preview.x = map.tileToWorldX(pointerTileX);
-                    marker.preview.y = map.tileToWorldY(pointerTileY);
+                    marker.graphics.x = map.tileToWorldX(pointerTileX_1);
+                    marker.graphics.y = map.tileToWorldY(pointerTileY_1);
+                    marker.preview.x = map.tileToWorldX(pointerTileX_1);
+                    marker.preview.y = map.tileToWorldY(pointerTileY_1);
                     if (devModeScene.input.manager.activePointer.leftButtonDown()) {
                         if (this.devModeTools.modeButtons[2].active || this.devModeTools.modeButtons[3].active) {
-                            if (this.area.x > 1 || this.area.y > 1) {
-                                for (var i = 0; i < this.area.x; i++) {
-                                    for (var j = 0; j < this.area.y; j++) {
-                                        this.putTile(pointerTileX + i, pointerTileY + j, this.selectedTileArea[i][j]);
+                            var selectedTile_1 = this.selectedTile;
+                            var originTileArea_1 = {};
+                            var nowBrushArea_1 = this.brushArea;
+                            var noDifferent = true;
+                            for (var i = 0; i < this.brushArea.x; i++) {
+                                for (var j = 0; j < this.brushArea.y; j++) {
+                                    if (!originTileArea_1[i]) {
+                                        originTileArea_1[i] = {};
+                                    }
+                                    originTileArea_1[i][j] = this.getTile(pointerTileX_1 + i, pointerTileY_1 + j, map);
+                                    if (selectedTile_1 !== originTileArea_1[i][j]) {
+                                        noDifferent = false;
                                     }
                                 }
                             }
-                            else {
-                                this.putTile(pointerTileX, pointerTileY, this.selectedTile);
+                            if (!noDifferent) {
+                                this.commandController.addCommand({
+                                    func: function () {
+                                        if (nowBrushArea_1.x > 1 || nowBrushArea_1.y > 1) {
+                                            for (var i = 0; i < nowBrushArea_1.x; i++) {
+                                                for (var j = 0; j < nowBrushArea_1.y; j++) {
+                                                    _this.putTile(pointerTileX_1 + i, pointerTileY_1 + j, selectedTile_1);
+                                                }
+                                            }
+                                        }
+                                        else {
+                                            _this.putTile(pointerTileX_1, pointerTileY_1, selectedTile_1);
+                                        }
+                                    },
+                                    undo: function () {
+                                        if (nowBrushArea_1.x > 1 || nowBrushArea_1.y > 1) {
+                                            for (var i = 0; i < nowBrushArea_1.x; i++) {
+                                                for (var j = 0; j < nowBrushArea_1.y; j++) {
+                                                    _this.putTile(pointerTileX_1 + i, pointerTileY_1 + j, originTileArea_1[i][j]);
+                                                }
+                                            }
+                                        }
+                                        else {
+                                            _this.putTile(pointerTileX_1, pointerTileY_1, selectedTile_1);
+                                        }
+                                    }
+                                });
                             }
                         }
                         else if (this.devModeTools.modeButtons[4].active) {
-                            var targetTile = this.getTile(pointerTileX, pointerTileY, map);
+                            var targetTile = this.getTile(pointerTileX_1, pointerTileY_1, map);
                             if (targetTile && this.selectedTile && targetTile !== this.selectedTile) {
-                                this.floodFill(map.currentLayerIndex, targetTile, this.selectedTile, pointerTileX, pointerTileY, false);
-                                taro.network.send('editTile', { gid: this.selectedTile, layer: map.currentLayerIndex, x: pointerTileX, y: pointerTileY, tool: 'flood' });
+                                this.floodFill(map.currentLayerIndex, targetTile, this.selectedTile, pointerTileX_1, pointerTileY_1, false);
+                                taro.network.send('editTile', { gid: this.selectedTile, layer: map.currentLayerIndex, x: pointerTileX_1, y: pointerTileY_1, tool: 'flood' });
                             }
                         }
                     }
