@@ -79,9 +79,25 @@ class DeveloperMode {
 			const gameMap = taro.game.data.map;
 			gameMap.wasEdited = true;
 			taro.network.send('editTile', data);
-			const { dataType, dataValue } = Object.entries(data).map(([k, dataValue]) => {
-				const dataType = k as MapEditToolEnum; return { dataType, dataValue };
-			})[0];
+			let dataType: MapEditToolEnum;
+			let dataValue: TileData<any>;
+			if (Object.keys(data).length > 1) {
+				const nowData = data as unknown as { gid: number, layer: number, x: number, y: number };
+				dataType = 'edit';
+				dataValue = {
+					...nowData,
+					selectedTiles: {
+						0: { 0: nowData.gid }
+					},
+					shape: 'rectangle',
+					size: { x: 1, y: 1 },
+				} as TileData<'edit'>['edit'];
+			} else {
+				Object.entries(data).map(([k, v]) => {
+					dataType = k as MapEditToolEnum;
+					dataValue = v as any;
+				});
+			}
 			const serverData = _.clone(dataValue);
 			if (gameMap.layers.length > 4 && serverData.layer >= 2) serverData.layer++;
 			const width = gameMap.width;
@@ -104,7 +120,7 @@ class DeveloperMode {
 				}
 			}
 
-			if (gameMap.layers[serverData.layer].name === 'walls') {
+			if (gameMap.layers[serverData.layer]?.name === 'walls') {
 				//if changes was in 'walls' layer we destroy all old walls and create new staticsFromMap
 				taro.physics.destroyWalls();
 				let map = taro.scaleMap(_.cloneDeep(gameMap));
@@ -290,32 +306,32 @@ class DeveloperMode {
 		if (taro.server.developerClientIds.includes(clientId)) {
 			// broadcast init entity change to all clients
 			taro.network.send('editInitEntity', data);
-            if (!this.initEntities) {
-                this.addInitEntities();
-            }
-            let found = false;
-            this.initEntities.forEach((action) => {
-                if (action.actionId === data.actionId) {
-                    found = true;
-                    if (data.wasEdited) action.wasEdited = true;
-                    if (data.position && data.position.x && data.position.y &&
-                        action.position && action.position.x && action.position.y) {
-                        action.position = data.position;
-                    }
-                    if (data.angle && action.angle) {
-                        action.angle = data.angle;
-                    }
-                    if (data.width && data.height && action.width && action.height) {
-                        action.width = data.width;
-                        action.height = data.height;
-                    }
-                }
-            });
-            if (!found) {
-                this.initEntities.push(data);
-            }
-        }
-    }
+			if (!this.initEntities) {
+				this.addInitEntities();
+			}
+			let found = false;
+			this.initEntities.forEach((action) => {
+				if (action.actionId === data.actionId) {
+					found = true;
+					if (data.wasEdited) action.wasEdited = true;
+					if (data.position && data.position.x && data.position.y &&
+						action.position && action.position.x && action.position.y) {
+						action.position = data.position;
+					}
+					if (data.angle && action.angle) {
+						action.angle = data.angle;
+					}
+					if (data.width && data.height && action.width && action.height) {
+						action.width = data.width;
+						action.height = data.height;
+					}
+				}
+			});
+			if (!found) {
+				this.initEntities.push(data);
+			}
+		}
+	}
 
 	createUnit(data) {
 		//const player = taro.game.getPlayerByClientId(clientId);

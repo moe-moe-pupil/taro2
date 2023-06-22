@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var DeveloperMode = /** @class */ (function () {
     function DeveloperMode() {
         if (taro.isClient)
@@ -70,6 +81,7 @@ var DeveloperMode = /** @class */ (function () {
         return this.activeTab && this.activeTab !== 'play';
     };
     DeveloperMode.prototype.editTile = function (data, clientId) {
+        var _a;
         // only allow developers to modify the tiles
         if (taro.server.developerClientIds.includes(clientId) || clientId === 'server') {
             if (JSON.stringify(data) === '{}') {
@@ -78,16 +90,27 @@ var DeveloperMode = /** @class */ (function () {
             var gameMap = taro.game.data.map;
             gameMap.wasEdited = true;
             taro.network.send('editTile', data);
-            var _a = Object.entries(data).map(function (_a) {
-                var k = _a[0], dataValue = _a[1];
-                var dataType = k;
-                return { dataType: dataType, dataValue: dataValue };
-            })[0], dataType = _a.dataType, dataValue = _a.dataValue;
-            var serverData = _.clone(dataValue);
+            var dataType_1;
+            var dataValue_1;
+            if (Object.keys(data).length > 1) {
+                var nowData = data;
+                dataType_1 = 'edit';
+                dataValue_1 = __assign(__assign({}, nowData), { selectedTiles: {
+                        0: { 0: nowData.gid }
+                    }, shape: 'rectangle', size: { x: 1, y: 1 } });
+            }
+            else {
+                Object.entries(data).map(function (_a) {
+                    var k = _a[0], v = _a[1];
+                    dataType_1 = k;
+                    dataValue_1 = v;
+                });
+            }
+            var serverData = _.clone(dataValue_1);
             if (gameMap.layers.length > 4 && serverData.layer >= 2)
                 serverData.layer++;
             var width = gameMap.width;
-            switch (dataType) {
+            switch (dataType_1) {
                 case 'fill': {
                     var nowValue = serverData;
                     var oldTile = gameMap.layers[nowValue.layer].data[nowValue.y * width + nowValue.x];
@@ -105,7 +128,7 @@ var DeveloperMode = /** @class */ (function () {
                     this.clearLayer(nowValue.layer);
                 }
             }
-            if (gameMap.layers[serverData.layer].name === 'walls') {
+            if (((_a = gameMap.layers[serverData.layer]) === null || _a === void 0 ? void 0 : _a.name) === 'walls') {
                 //if changes was in 'walls' layer we destroy all old walls and create new staticsFromMap
                 taro.physics.destroyWalls();
                 var map = taro.scaleMap(_.cloneDeep(gameMap));

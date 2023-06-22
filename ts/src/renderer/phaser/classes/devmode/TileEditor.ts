@@ -166,11 +166,28 @@ class TileEditor {
 		const map = taro.game.data.map;
 		inGameEditor.mapWasEdited && inGameEditor.mapWasEdited();
 		const width = map.width;
-		const { dataType, dataValue } = Object.entries(data).map(([k, v]) => {
-			const dataType = k as MapEditToolEnum;
-			const dataValue = v as any;
-			return { dataType, dataValue };
-		})[0];
+		let dataType: MapEditToolEnum;
+		let dataValue: TileData<any>;
+		// players'action editMapTile do not have dataType
+		if (Object.keys(data).length > 1) {
+			const nowData = data as unknown as { gid: number, layer: number, x: number, y: number };
+			dataType = 'edit';
+			dataValue = {
+				...nowData,
+				selectedTiles: {
+					0: { 0: nowData.gid }
+				},
+				shape: 'rectangle',
+				size: { x: 1, y: 1 },
+			} as TileData<'edit'>['edit'];
+		} else {
+			Object.entries(data).map(([k, v]) => {
+				dataType = k as MapEditToolEnum;
+				dataValue = v as any;
+			});
+		}
+
+
 		let tempLayer = dataValue.layer;
 		if (map.layers.length > 4 && dataValue.layer >= 2) {
 			tempLayer++;
@@ -194,7 +211,7 @@ class TileEditor {
 				this.clearLayer(nowValue.layer);
 			}
 		}
-		if (taro.physics && map.layers[tempLayer].name === 'walls') {
+		if (taro.physics && map.layers[tempLayer]?.name === 'walls') {
 			//if changes was in 'walls' layer we destroy all old walls and create new staticsFromMap
 			taro.physics.destroyWalls();
 			let mapCopy = taro.scaleMap(_.cloneDeep(map));

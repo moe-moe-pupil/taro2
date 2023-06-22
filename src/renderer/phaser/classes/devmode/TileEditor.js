@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var TileEditor = /** @class */ (function () {
     function TileEditor(gameScene, devModeScene, devModeTools, commandController) {
         var _this = this;
@@ -131,18 +142,30 @@ var TileEditor = /** @class */ (function () {
         });
     };
     TileEditor.prototype.edit = function (data) {
+        var _a;
         if (JSON.stringify(data) === '{}') {
             throw 'receive: {}';
         }
         var map = taro.game.data.map;
         inGameEditor.mapWasEdited && inGameEditor.mapWasEdited();
         var width = map.width;
-        var _a = Object.entries(data).map(function (_a) {
-            var k = _a[0], v = _a[1];
-            var dataType = k;
-            var dataValue = v;
-            return { dataType: dataType, dataValue: dataValue };
-        })[0], dataType = _a.dataType, dataValue = _a.dataValue;
+        var dataType;
+        var dataValue;
+        // players'action editMapTile do not have dataType
+        if (Object.keys(data).length > 1) {
+            var nowData = data;
+            dataType = 'edit';
+            dataValue = __assign(__assign({}, nowData), { selectedTiles: {
+                    0: { 0: nowData.gid }
+                }, shape: 'rectangle', size: { x: 1, y: 1 } });
+        }
+        else {
+            Object.entries(data).map(function (_a) {
+                var k = _a[0], v = _a[1];
+                dataType = k;
+                dataValue = v;
+            });
+        }
         var tempLayer = dataValue.layer;
         if (map.layers.length > 4 && dataValue.layer >= 2) {
             tempLayer++;
@@ -165,7 +188,7 @@ var TileEditor = /** @class */ (function () {
                 this.clearLayer(nowValue.layer);
             }
         }
-        if (taro.physics && map.layers[tempLayer].name === 'walls') {
+        if (taro.physics && ((_a = map.layers[tempLayer]) === null || _a === void 0 ? void 0 : _a.name) === 'walls') {
             //if changes was in 'walls' layer we destroy all old walls and create new staticsFromMap
             taro.physics.destroyWalls();
             var mapCopy = taro.scaleMap(_.cloneDeep(map));
