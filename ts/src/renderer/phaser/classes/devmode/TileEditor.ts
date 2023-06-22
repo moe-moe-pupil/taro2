@@ -103,9 +103,8 @@ class TileEditor {
 					nowBrushSize.x = 1;
 					nowBrushSize.y = 1;
 				}
-				const brushSizeOffset = 1;
-				const pointerTileX = gameMap.worldToTileX(worldPoint.x - (nowBrushSize.x - brushSizeOffset) * Constants.TILE_SIZE / 2, true);
-				const pointerTileY = gameMap.worldToTileY(worldPoint.y - (nowBrushSize.y - brushSizeOffset) * Constants.TILE_SIZE / 2, true);
+				const pointerTileX = gameMap.worldToTileX(worldPoint.x - (nowBrushSize.x - 0.5) * Constants.TILE_SIZE / 2, true);
+				const pointerTileY = gameMap.worldToTileY(worldPoint.y - (nowBrushSize.y - 0.5) * Constants.TILE_SIZE / 2, true);
 				this.clearTint();
 				this.selectedTileArea = {};
 				for (let i = 0; i < nowBrushSize.x; i++) {
@@ -167,28 +166,11 @@ class TileEditor {
 		const map = taro.game.data.map;
 		inGameEditor.mapWasEdited && inGameEditor.mapWasEdited();
 		const width = map.width;
-		let dataType: MapEditToolEnum;
-		let dataValue: TileData<any>;
-		// players'action editMapTile do not have dataType
-		if (Object.keys(data).length > 1) {
-			const nowData = data as unknown as { gid: number, layer: number, x: number, y: number };
-			dataType = 'edit';
-			dataValue = {
-				...nowData,
-				selectedTiles: {
-					0: { 0: nowData.gid }
-				},
-				shape: 'rectangle',
-				size: { x: 1, y: 1 },
-			} as TileData<'edit'>['edit'];
-		} else {
-			Object.entries(data).map(([k, v]) => {
-				dataType = k as MapEditToolEnum;
-				dataValue = v as any;
-			});
-		}
-
-
+		const { dataType, dataValue } = Object.entries(data).map(([k, v]) => {
+			const dataType = k as MapEditToolEnum;
+			const dataValue = v as any;
+			return { dataType, dataValue };
+		})[0];
 		let tempLayer = dataValue.layer;
 		if (map.layers.length > 4 && dataValue.layer >= 2) {
 			tempLayer++;
@@ -212,7 +194,7 @@ class TileEditor {
 				this.clearLayer(nowValue.layer);
 			}
 		}
-		if (taro.physics && map.layers[tempLayer]?.name === 'walls') {
+		if (taro.physics && map.layers[tempLayer].name === 'walls') {
 			//if changes was in 'walls' layer we destroy all old walls and create new staticsFromMap
 			taro.physics.destroyWalls();
 			let mapCopy = taro.scaleMap(_.cloneDeep(map));
@@ -244,14 +226,13 @@ class TileEditor {
 		if (this.gameScene.tilemapLayers[layer].visible && selectedTiles) {
 			for (let x = 0; x < brushSize.x; x++) {
 				for (let y = 0; y < brushSize.y; y++) {
-					if (sample[x] && sample[x][y] !== undefined && DevModeScene.pointerInsideMap(tileX + x, tileY + y, map)) {
+					if (sample[x] && sample[x][y] && DevModeScene.pointerInsideMap(tileX + x, tileY + y, map)) {
 						let index = sample[x][y];
 						if (index !== (map.getTileAt(tileX + x, tileY + y, true, layer)).index &&
 							!(index === 0 && map.getTileAt(tileX + x, tileY + y, true, layer).index === -1)) {
-							if (index === 0) index = -1;
 							map.putTileAt(index, tileX + x, tileY + y, false, layer);
 							map.getTileAt(tileX + x, tileY + y, true, layer).tint = 0xffffff;
-							if (index === -1) index = 0;
+                            if (index === -1) index = 0;
 							taroMap.layers[tempLayer].data[(tileY + y) * width + tileX + x] = index;
 						}
 					}
@@ -414,9 +395,8 @@ class TileEditor {
 					marker.showPreview(true);
 
 					// Rounds down to nearest tile
-					const brushSizeOffset = 1;
-					const pointerTileX = map.worldToTileX(worldPoint.x - (marker.graphics.scaleX - brushSizeOffset) * Constants.TILE_SIZE / 2, true);
-					const pointerTileY = map.worldToTileY(worldPoint.y - (marker.graphics.scaleY - brushSizeOffset) * Constants.TILE_SIZE / 2, true);
+					const pointerTileX = map.worldToTileX(worldPoint.x - (marker.graphics.scaleX - 0.5) * Constants.TILE_SIZE / 2, true);
+					const pointerTileY = map.worldToTileY(worldPoint.y - (marker.graphics.scaleY - 0.5) * Constants.TILE_SIZE / 2, true);
 
 					// Snap to tile coordinates, but in world space
 					marker.graphics.x = map.tileToWorldX(pointerTileX);
