@@ -3,6 +3,7 @@
 		"module": "None",
 		"target": "es5",
 		"sourceMap": true,
+		"sourceRoot": "http://localhost/ts/",
 		"outDir": ".",
 		"rootDir": "ts",
 		"typeRoots": [
