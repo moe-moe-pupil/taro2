@@ -249,7 +249,6 @@ var PhysicsComponent = TaroEventingClass.extend({
 			if (self.engine === 'BOX2DWASM') {
 				const callback = Object.assign(new self.JSQueryCallback(), {
 					ReportFixture: (fixture_p) => {
-						console.log('report')
 						const fixture = self.wrapPointer(fixture_p, self.b2Fixture);
 						entityId = fixture.GetBody().GetFixtureList().taroId;
 						var entity = taro.$(entityId);
