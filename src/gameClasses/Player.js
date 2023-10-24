@@ -109,6 +109,11 @@ var Player = TaroEntity.extend({
 					];
 				}
 
+				if (taro.server.developerClientIds.includes(clientId)) {
+					playerJoinStreamData.push({ scriptData: taro.game.data.scripts });
+					playerJoinStreamData.push({ variableData: taro.defaultVariables });
+				}
+
 				self.streamUpdateData(playerJoinStreamData);
 			}
 
@@ -162,12 +167,6 @@ var Player = TaroEntity.extend({
 		if (index !== -1) {
 			this._stats.unitIds.splice(index, 1);
 			if (deselectUnit && this._stats.selectedUnitId === unit.id()) {
-				var unit = taro.$(unit.id());
-				/*if (unit) {
-					unit.ability.stopMovingX();
-					unit.ability.stopMovingY();
-					unit.ability.stopUsingItem();
-				}*/
 				this.selectUnit(null);
 			}
 		}
@@ -187,6 +186,7 @@ var Player = TaroEntity.extend({
 				self.streamUpdateData([{ selectedUnitId: unitId }]);
 				unit.streamUpdateData([{ itemIds: unit._stats.itemIds }]); // send item inventory data for the newly selected unit
 			} else if (unitId === null) {
+				self.control.releaseAllKeys();
 				self._stats.selectedUnitId = null;
 				self.streamUpdateData([{ selectedUnitId: null }]);
 			}
@@ -209,11 +209,13 @@ var Player = TaroEntity.extend({
                 taro.client.emit('create-ability-bar', {keybindings: taro.game.data.unitTypes[unit._stats.type].controls.abilities, abilities: abilitiesData});
 				unit.renderMobileControl();
                 
+
 				taro.client.selectedUnit = unit;
 				taro.client.eventLog.push([taro._currentTime, `my unit selected ${unitId}`]);
-			} else if (unitId === null) {
-				self._stats.selectedUnitId = null;
+			} else if (self._stats.clientId == taro.network.id() && unitId === null) {
 				taro.client.selectedUnit = null;
+				self._stats.selectedUnitId = null;
+				self.control.releaseAllKeys();
 			}
 		}
 	},
@@ -558,6 +560,15 @@ var Player = TaroEntity.extend({
 							case 'cameraTrackedUnitId':
 								// this unit was queued to be tracked by a player's camera
 								self.cameraTrackUnit(newValue);
+								break;
+
+							case 'scriptData':
+								taro.developerMode.serverScriptData = newValue;
+								break;
+
+							case 'variableData':
+								taro.developerMode.serverVariableData = newValue;
+								window.inGameEditor?.compareAndUpdateVariablesData && window.inGameEditor.compareAndUpdateVariablesData(newValue);
 								break;
 
 							case 'mapData':

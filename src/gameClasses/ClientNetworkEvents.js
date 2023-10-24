@@ -439,8 +439,17 @@ var ClientNetworkEvents = {
 		taro.client.emit("editRegion", data);
 	},
 
+	// when other players' update variables, apply the change to my local
+	_onEditVariable: function (data) {
+		taro.client.emit("editVariable", data);
+	},
+
 	_onEditInitEntity: function (data) {
 		taro.client.emit("editInitEntity", data);
+	},
+
+	_onEditGlobalScripts: function (data) {
+		taro.client.emit("editGlobalScripts", data);
 	},
 
 	_updateClientInitEntities: function (data) {

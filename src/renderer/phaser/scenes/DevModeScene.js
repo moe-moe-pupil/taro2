@@ -60,6 +60,53 @@ var DevModeScene = /** @class */ (function (_super) {
                 _this.createEntityImage(data);
             }
         });
+        taro.client.on('applyScriptChanges', function (data) {
+            taro.network.send('editGlobalScripts', data);
+        });
+        taro.client.on('editGlobalScripts', function (data) {
+            Object.entries(data).forEach(function (_a) {
+                var scriptId = _a[0], script = _a[1];
+                if (!script.deleted) {
+                    taro.developerMode.serverScriptData[scriptId] = script;
+                }
+                else {
+                    delete taro.developerMode.serverScriptData[scriptId];
+                }
+            });
+            taro.script.load(data, true);
+            taro.script.scriptCache = {};
+        });
+        taro.client.on('applyVariableChanges', function (data) {
+            taro.network.send('editVariable', data);
+        });
+        taro.client.on('editVariable', function (data) {
+            Object.entries(data).forEach(function (_a) {
+                var key = _a[0], variable = _a[1];
+                //editing existing variable
+                if (taro.game.data.variables[key]) {
+                    //deleting variable
+                    if (variable.delete) {
+                        delete taro.game.data.variables[key];
+                        //renaming variable
+                    }
+                    else if (variable.newKey) {
+                        taro.game.data.variables[variable.newKey] = taro.game.data.variables[key];
+                        delete taro.game.data.variables[key];
+                        //editing variable
+                    }
+                    else {
+                        taro.game.data.variables[key].value = variable.value;
+                    }
+                    //creating new variable
+                }
+                else {
+                    taro.game.data.variables[key] = {
+                        dataType: variable.dataType,
+                        value: variable.value
+                    };
+                }
+            });
+        });
         taro.client.on('updateInitEntities', function () {
             _this.updateInitEntities();
         });

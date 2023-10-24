@@ -466,8 +466,16 @@ var ServerNetworkEvents = {
 		taro.developerMode.editRegion(data, clientId);
 	},
 
+	_onEditVariable: function(data, clientId) {
+		taro.developerMode.editVariable(data, clientId);
+	},
+
 	_onEditInitEntity: function(data, clientId) {
 		taro.developerMode.editInitEntity(data, clientId);
+	},
+
+	_onEditGlobalScripts: function(data, clientId) {
+		taro.developerMode.editGlobalScripts(data, clientId);
 	},
 
 	_onRequestInitEntities: function(data, clientId) {
